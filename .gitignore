@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local config
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+
+# OS/System files
+.DS_Store
+
+# IntelliJ IDEA files (specifics, optional but safe)
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# Keystores
+*.jks
+*.keystore
+
+# Logs
+*.log
