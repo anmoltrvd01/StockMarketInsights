@@ -1,133 +1,101 @@
 package com.example.stockmarketinsights.screensUi
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.stockmarketinsights.viewmodel.ExploreViewModel
+import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
-
-private const val API_KEY = "apikey"
 
 @Composable
 fun ExploreScreen(
-    viewModel: ExploreViewModel,
-    modifier: Modifier = Modifier
+    onViewAllGainersClick: () -> Unit = {},
+    onViewAllLosersClick: () -> Unit = {},
+    onStockClick: (StockSummaryItem) -> Unit = {}  // 👈 For navigation
 ) {
-    val gainers by viewModel.topGainers.collectAsState()
-    val losers by viewModel.topLosers.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.initData(apiKey = API_KEY)
+    val dummyGainers = remember {
+        listOf(
+            StockSummaryItem("Apple Inc.", "AAPL", "$195.23", "+2.1%"),
+            StockSummaryItem("Tesla Inc.", "TSLA", "$254.32", "+5.3%"),
+            StockSummaryItem("Netflix", "NFLX", "$410.23", "+1.4%"),
+            StockSummaryItem("Meta", "META", "$298.56", "+3.6%")
+        )
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(12.dp)
+    val dummyLosers = remember {
+        listOf(
+            StockSummaryItem("Intel", "INTC", "$34.12", "-2.5%"),
+            StockSummaryItem("Nvidia", "NVDA", "$430.89", "-0.9%"),
+            StockSummaryItem("Google", "GOOG", "$135.67", "-1.3%"),
+            StockSummaryItem("Amazon", "AMZN", "$118.45", "-4.6%")
+        )
+    }
+
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)
     ) {
-        SectionWithStocks(
+        Text("Stocks App", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SectionGridWithHeader(
             title = "Top Gainers",
-            stocks = gainers.take(4),
-            loadingText = "Loading Gainers...",
-            onViewAllClick = { /* TODO: Navigate to View All Gainers */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.45f)
+            items = dummyGainers,
+            onViewAllClick = onViewAllGainersClick,
+            backgroundColor = Color(0xFFD0F5C9),
+            onStockClick = onStockClick  // 👈 Pass navigation callback
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        SectionWithStocks(
+        SectionGridWithHeader(
             title = "Top Losers",
-            stocks = losers.take(4),
-            loadingText = "Loading Losers...",
-            onViewAllClick = { /* TODO: Navigate to View All Losers */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
+            items = dummyLosers,
+            onViewAllClick = onViewAllLosersClick,
+            backgroundColor = Color(0xFFFADBD8),
+            onStockClick = onStockClick  // 👈 Pass navigation callback
         )
     }
 }
 
 @Composable
-fun SectionWithStocks(
+fun SectionGridWithHeader(
     title: String,
-    stocks: List<StockSummaryItem>,
-    loadingText: String,
+    items: List<StockSummaryItem>,
     onViewAllClick: () -> Unit,
-    modifier: Modifier = Modifier
+    backgroundColor: Color,
+    onStockClick: (StockSummaryItem) -> Unit  // 👈 Required
 ) {
-    Column(modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
-            )
-            TextButton(onClick = onViewAllClick) {
-                Text("View All")
-            }
-        }
-
-        if (stocks.isNotEmpty()) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(stocks) { stock ->
-                    StockCard(stock)
-                }
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(loadingText)
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        TextButton(onClick = onViewAllClick) {
+            Text("View All")
         }
     }
-}
 
-@Composable
-fun StockCard(stock: StockSummaryItem) {
-    Card(
+    Spacer(modifier = Modifier.height(8.dp))
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
         modifier = Modifier
-            .padding(4.dp)
             .fillMaxWidth()
-            .height(120.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+            .height(200.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(stock.symbol, style = MaterialTheme.typography.titleMedium)
-            Text(stock.name, maxLines = 1)
-            Text("₹${stock.price}", style = MaterialTheme.typography.bodyLarge)
-            Text(
-                "${stock.changePercent}%",
-                color = if (stock.changePercent > 0) Color(0xFF2E7D32) else Color.Red,
-                style = MaterialTheme.typography.bodyMedium
+        items(items) { stock ->
+            StockCard(
+                stock = stock,
+                backgroundColor = backgroundColor,
+                onClick = { onStockClick(stock) }  // 👈 Trigger detail screen
             )
         }
     }

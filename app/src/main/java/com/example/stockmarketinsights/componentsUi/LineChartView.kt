@@ -1,43 +1,52 @@
 package com.example.stockmarketinsights.componentsUi
 
-import android.graphics.Color
+import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.Description
+import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
-import com.github.mikephil.charting.data.Entry
 
 @Composable
-fun LineChartView(
-    entries: List<Entry>,
-    modifier: Modifier = Modifier
-) {
+fun LineChartView(modifier: Modifier = Modifier) {
     AndroidView(
-        modifier = modifier,
         factory = { context ->
             LineChart(context).apply {
-                description.isEnabled = false
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
                 setTouchEnabled(true)
                 setPinchZoom(true)
-
-                xAxis.position = XAxis.XAxisPosition.BOTTOM
-                axisRight.isEnabled = false
-                axisLeft.setDrawGridLines(false)
-                xAxis.setDrawGridLines(false)
+                description = Description().apply { text = "Price History" }
+                setNoDataText("No chart data available")
             }
         },
+        modifier = modifier,
         update = { chart ->
-            val dataSet = LineDataSet(entries, "Stock Price")
-            dataSet.color = Color.BLUE
-            dataSet.setCircleColor(Color.BLUE)
-            dataSet.lineWidth = 2f
-            dataSet.setDrawValues(false)
+            val entries = listOf(
+                Entry(0f, 240f),
+                Entry(1f, 245f),
+                Entry(2f, 250f),
+                Entry(3f, 252f),
+                Entry(4f, 254f)
+            )
 
-            chart.data = LineData(dataSet)
-            chart.invalidate() // Refresh chart
+            val dataSet = LineDataSet(entries, "Price").apply {
+                color = Color.Blue.hashCode()
+                valueTextColor = Color.Black.hashCode()
+                lineWidth = 2f
+                circleRadius = 4f
+                setCircleColor(Color.Blue.hashCode())
+            }
+
+            val lineData = LineData(dataSet)
+            chart.data = lineData
+            chart.invalidate()
         }
     )
 }

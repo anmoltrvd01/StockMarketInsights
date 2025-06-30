@@ -1,63 +1,53 @@
 package com.example.stockmarketinsights.screensUi
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.stockmarketinsights.roomdb.WatchlistEntity
-import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
 
 @Composable
 fun WatchlistScreen(
-    viewModel: WatchlistViewModel,
-    modifier: Modifier = Modifier
+    onWatchlistClick: (String) -> Unit = {}  // Navigate on click
 ) {
-    val items by viewModel.watchlistItems.collectAsState()
+    val dummyWatchlists = remember {
+        listOf("Watchlist 1", "Watchlist 2")
+    }
 
-    Box(
-        modifier = modifier
+    Column(
+        modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        if (items.isEmpty()) {
-            // Empty State
-            Text(
-                text = "Your watchlist is empty.",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        } else {
-            Column {
-                Text(
-                    text = "Your Watchlist",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+        Text("Watchlist", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(12.dp))
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(items) { stock ->
-                        WatchlistItemCard(stock = stock) {
-                            viewModel.removeFromWatchlist(stock)
-                        }
-                    }
-                }
+        LazyColumn {
+            items(dummyWatchlists) { name ->
+                WatchlistCardSimple(name = name, onClick = {
+                    onWatchlistClick(name)
+                })
             }
         }
     }
 }
 
 @Composable
-fun WatchlistItemCard(stock: WatchlistEntity, onRemoveClick: () -> Unit) {
+fun WatchlistCardSimple(name: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
+            .padding(vertical = 6.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Row(
             modifier = Modifier
@@ -66,13 +56,11 @@ fun WatchlistItemCard(stock: WatchlistEntity, onRemoveClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(stock.symbol, style = MaterialTheme.typography.titleMedium)
-                Text("₹${stock.price}", style = MaterialTheme.typography.bodyMedium)
-            }
-            OutlinedButton(onClick = onRemoveClick) {
-                Text("Remove")
-            }
+            Text(name, style = MaterialTheme.typography.bodyLarge)
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = "Open $name"
+            )
         }
     }
 }

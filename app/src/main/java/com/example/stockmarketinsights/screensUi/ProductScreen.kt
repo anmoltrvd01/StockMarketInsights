@@ -1,36 +1,88 @@
 package com.example.stockmarketinsights.screensUi
 
-
-
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.stockmarketinsights.viewmodel.StockViewModel
 import com.example.stockmarketinsights.componentsUi.LineChartView
+import com.example.stockmarketinsights.dataModel.StockDetail
+import com.example.stockmarketinsights.dialogsUi.AddToWatchlistDialog
 
 @Composable
-fun ProductScreen(viewModel: StockViewModel) {
-    val chartData by viewModel.chartData.collectAsState()
+fun ProductScreen() {
+    val stock = remember {
+        StockDetail(
+            name = "Tesla Inc.",
+            symbol = "TSLA",
+            price = "$254.32",
+            marketCap = "800B"
+        )
+    }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    var isInWatchlist by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
-        Text("Stock Price Graph", style = MaterialTheme.typography.titleLarge)
+    // Dummy existing watchlists
+    val dummyWatchlists = listOf("Tech Picks", "Favorites", "Long-Term")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(stock.name, style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text("(${stock.symbol})", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Price: ${stock.price}", style = MaterialTheme.typography.bodyLarge)
+        Text("Market Cap: ${stock.marketCap}", style = MaterialTheme.typography.bodyMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (chartData.isNotEmpty()) {
-            LineChartView(
-                entries = chartData,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
+        // Chart
+        LineChartView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Add/Remove Button
+        Button(
+            onClick = {
+                if (isInWatchlist) {
+                    isInWatchlist = false
+                } else {
+                    showDialog = true
+                }
+            }
+        ) {
+            Icon(
+                imageVector = if (isInWatchlist) Icons.Default.Check else Icons.Default.Add,
+                contentDescription = null
             )
-        } else {
-            Text("Loading...", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (isInWatchlist) "Remove from Watchlist" else "Add to Watchlist")
         }
+    }
+
+    // AddToWatchlistDialog
+    if (showDialog) {
+        AddToWatchlistDialog(
+            showDialog = true,
+            existingWatchlists = dummyWatchlists,
+            onDismiss = { showDialog = false },
+            onAdd = { selected ->
+                // Later: Save to RoomDB here
+                isInWatchlist = true
+                showDialog = false
+            }
+        )
     }
 }
