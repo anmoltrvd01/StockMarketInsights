@@ -6,14 +6,17 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
-import androidx.compose.ui.Alignment
+
 @Composable
-fun ViewAllScreen() {
+fun ViewAllScreen(
+    onStockClick: (StockSummaryItem) -> Unit = {}
+) {
     val allStocks = remember {
         listOf(
             StockSummaryItem("Tesla Inc.", "TSLA", "$254.32", "+5.3%"),
@@ -48,27 +51,29 @@ fun ViewAllScreen() {
             items(pagedStocks) { stock ->
                 StockCard(
                     stock = stock,
-                    backgroundColor = if (stock.changePercent.startsWith("+")) Color(0xFFD0F5C9) else Color(0xFFFADBD8)
+                    backgroundColor = if (stock.changePercent.startsWith("+")) Color(0xFFD0F5C9) else Color(0xFFFADBD8),
+                    onClick = { onStockClick(stock) }
                 )
             }
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         if (pagedStocks.size < allStocks.size) {
             Button(
                 onClick = { currentPage++ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Load More")
             }
         } else {
             Text(
-                "No more stocks to load",
+                text = "No more stocks to load",
+                style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(12.dp)
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
             )
         }
     }

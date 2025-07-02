@@ -11,10 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.stockmarketinsights.dataModel.StockSummaryItem
 
 @Composable
 fun WatchlistScreen(
-    onWatchlistClick: (String) -> Unit = {}  // Navigate on click
+    onWatchlistClick: (String) -> Unit = {},
+    onStockClick: (StockSummaryItem) -> Unit = {}
 ) {
     val dummyWatchlists = remember {
         listOf("Watchlist 1", "Watchlist 2")
@@ -25,7 +27,7 @@ fun WatchlistScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Watchlist", style = MaterialTheme.typography.titleLarge)
+        Text("Watchlists", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn {

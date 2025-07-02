@@ -7,7 +7,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 
@@ -15,7 +17,7 @@ import com.example.stockmarketinsights.dataModel.StockSummaryItem
 fun ExploreScreen(
     onViewAllGainersClick: () -> Unit = {},
     onViewAllLosersClick: () -> Unit = {},
-    onStockClick: (StockSummaryItem) -> Unit = {}  // 👈 For navigation
+    onStockClick: (StockSummaryItem) -> Unit = {}
 ) {
     val dummyGainers = remember {
         listOf(
@@ -35,29 +37,49 @@ fun ExploreScreen(
         )
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text("Stocks App", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Explore Stocks",
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = { Text("Search Stocks...") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            enabled = false  // Feature placeholder for now
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         SectionGridWithHeader(
             title = "Top Gainers",
             items = dummyGainers,
             onViewAllClick = onViewAllGainersClick,
             backgroundColor = Color(0xFFD0F5C9),
-            onStockClick = onStockClick  // 👈 Pass navigation callback
+            onStockClick = onStockClick
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         SectionGridWithHeader(
             title = "Top Losers",
             items = dummyLosers,
             onViewAllClick = onViewAllLosersClick,
             backgroundColor = Color(0xFFFADBD8),
-            onStockClick = onStockClick  // 👈 Pass navigation callback
+            onStockClick = onStockClick
         )
     }
 }
@@ -68,34 +90,42 @@ fun SectionGridWithHeader(
     items: List<StockSummaryItem>,
     onViewAllClick: () -> Unit,
     backgroundColor: Color,
-    onStockClick: (StockSummaryItem) -> Unit  // 👈 Required
+    onStockClick: (StockSummaryItem) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp
+            )
+        )
         TextButton(onClick = onViewAllClick) {
             Text("View All")
         }
     }
 
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(10.dp))
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(items) { stock ->
             StockCard(
                 stock = stock,
                 backgroundColor = backgroundColor,
-                onClick = { onStockClick(stock) }  // 👈 Trigger detail screen
+                onClick = { onStockClick(stock) }
             )
         }
     }

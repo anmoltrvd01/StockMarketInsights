@@ -7,11 +7,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.componentsUi.StockCard
+import com.example.stockmarketinsights.dataModel.StockSummaryItem
 
 @Composable
-fun WatchlistDetailScreen(watchlistName: String) {
+fun WatchlistDetailScreen(
+    watchlistName: String = "My Watchlist",
+    onStockClick: (StockSummaryItem) -> Unit = {}
+) {
     val dummyStocks = remember {
         listOf(
             StockSummaryItem("Apple Inc.", "AAPL", "$195.23", "+2.1%"),
@@ -34,11 +37,7 @@ fun WatchlistDetailScreen(watchlistName: String) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = watchlistName,
-            style = MaterialTheme.typography.titleLarge
-        )
-
+        Text(text = watchlistName, style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyVerticalGrid(
@@ -51,7 +50,8 @@ fun WatchlistDetailScreen(watchlistName: String) {
             items(pagedStocks) { stock ->
                 StockCard(
                     stock = stock,
-                    backgroundColor = if (stock.changePercent.startsWith("+")) Color(0xFFD0F5C9) else Color(0xFFFADBD8)
+                    backgroundColor = if (stock.changePercent.startsWith("+")) Color(0xFFD0F5C9) else Color(0xFFFADBD8),
+                    onClick = { onStockClick(stock) }
                 )
             }
         }
@@ -72,7 +72,7 @@ fun WatchlistDetailScreen(watchlistName: String) {
                 color = Color.Gray,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 8.dp)
             )
         }
     }
