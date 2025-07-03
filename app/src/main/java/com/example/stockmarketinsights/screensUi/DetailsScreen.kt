@@ -1,7 +1,6 @@
 package com.example.stockmarketinsights.screensUi
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +27,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     var isSheetOpen by rememberSaveable { mutableStateOf(false) }
 
-    // Render the Bottom Sheet only if needed
     if (isSheetOpen) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -40,21 +38,25 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
-            AddToWatchlistBottomSheet(stock = stock, sheetState = sheetState)
+            AddToWatchlistBottomSheet(
+                stock = stock,
+                sheetState = sheetState,
+                onClose = {
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        isSheetOpen = false
+                    }
+                }
+            )
         }
     }
 
-    // Use Scaffold to keep top bar + content cleanly managed
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text("Stock Detail Screen")
-                },
+                title = { Text("Stock Detail Screen") },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -77,7 +79,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Stock Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -113,7 +114,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Chart Placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,7 +123,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Time Range Tabs
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
@@ -135,7 +134,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // About Section
             Text("About ${stock.name}", style = MaterialTheme.typography.titleSmall)
             Text(
                 "This is a dummy description of ${stock.name}. Replace this with real company info from the API.",
@@ -144,7 +142,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Industry / Sector Chips
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AssistChip(onClick = {}, label = { Text("Industry: Tech") })
                 AssistChip(onClick = {}, label = { Text("Sector: AI") })
@@ -152,7 +149,6 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Additional Stats
             Text("Current price: ${stock.price}", style = MaterialTheme.typography.bodyMedium)
             Text("Profit Margin: 0.247 (Sample)", style = MaterialTheme.typography.bodyMedium)
         }
