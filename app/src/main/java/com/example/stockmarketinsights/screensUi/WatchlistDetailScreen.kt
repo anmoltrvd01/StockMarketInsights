@@ -2,78 +2,113 @@ package com.example.stockmarketinsights.screensUi
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.roomdb.AppDatabase
+import com.example.stockmarketinsights.roomdb.WatchlistRepository
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchlistDetailScreen(
     watchlistName: String = "My Watchlist",
+    navController: NavController,
     onStockClick: (StockSummaryItem) -> Unit = {}
 ) {
-    val dummyStocks = remember {
-        listOf(
-            StockSummaryItem("Apple Inc.", "AAPL", "$195.23", "+2.1%"),
-            StockSummaryItem("Tesla Inc.", "TSLA", "$254.32", "+5.3%"),
-            StockSummaryItem("Netflix", "NFLX", "$410.23", "-1.4%"),
-            StockSummaryItem("Meta", "META", "$298.56", "-3.6%"),
-            StockSummaryItem("Intel", "INTC", "$34.12", "-2.5%"),
-            StockSummaryItem("Nvidia", "NVDA", "$430.89", "+6.9%"),
-            StockSummaryItem("Amazon", "AMZN", "$132.56", "+1.7%"),
-            StockSummaryItem("Microsoft", "MSFT", "$322.50", "+0.9%")
-        )
-    }
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val repository = remember { WatchlistRepository(db.watchlistDao()) }
+    val viewModel: WatchlistViewModel = viewModel(factory = WatchlistViewModelFactory(repository))
 
-    var currentPage by remember { mutableStateOf(1) }
-    val pageSize = 6
-    val pagedStocks = dummyStocks.take(currentPage * pageSize)
+    val allItems by viewModel.watchlistItems.collectAsState()
+    val stocksInWatchlist = allItems.filter { it.watchlistName == watchlistName }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(text = watchlistName, style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(12.dp))
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            items(pagedStocks) { stock ->
-                StockCard(
-                    stock = stock,
-                    backgroundColor = if (stock.changePercent.startsWith("+")) Color(0xFFD0F5C9) else Color(0xFFFADBD8),
-                    onClick = { onStockClick(stock) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (pagedStocks.size < dummyStocks.size) {
-            Button(
-                onClick = { currentPage++ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Load More")
-            }
-        } else {
-            Text(
-                text = "No more stocks to load",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(watchlistName) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .padding(padding)
+        ) {
+            if (stocksInWatchlist.isEmpty()) {
+                Text(
+                    "No stocks found in this watchlist.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(stocksInWatchlist) { item ->
+                        val stock = StockSummaryItem(
+                            name = item.stockName,
+                            symbol = item.stockSymbol,
+                            price = "N/A",
+                            changePercent = "N/A"
+                        )
+
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            StockCard(
+                                stock = stock,
+                                backgroundColor = Color(0xFFF5F5F5),
+                                onClick = { onStockClick(stock) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            IconButton(
+                                onClick = {
+                                    viewModel.deleteWatchlistItem(item)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "${item.stockSymbol} removed from '$watchlistName'"
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete Stock"
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

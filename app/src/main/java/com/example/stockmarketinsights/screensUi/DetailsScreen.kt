@@ -14,15 +14,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.stockmarketinsights.componentsUi.AddToWatchlistBottomSheet
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.roomdb.AppDatabase
+import com.example.stockmarketinsights.roomdb.WatchlistRepository
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val repository = remember { WatchlistRepository(db.watchlistDao()) }
+    val viewModel: WatchlistViewModel = viewModel(factory = WatchlistViewModelFactory(repository))
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope = rememberCoroutineScope()
     var isSheetOpen by rememberSaveable { mutableStateOf(false) }
@@ -46,7 +57,8 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
                         sheetState.hide()
                         isSheetOpen = false
                     }
-                }
+                },
+                viewModel = viewModel
             )
         }
     }

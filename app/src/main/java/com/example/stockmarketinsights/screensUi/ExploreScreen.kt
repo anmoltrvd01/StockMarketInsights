@@ -12,77 +12,151 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import com.example.stockmarketinsights.viewmodel.ExploreViewModel
+
 
 @Composable
 fun ExploreScreen(
+    modifier: Modifier = Modifier,
     onViewAllGainersClick: () -> Unit = {},
     onViewAllLosersClick: () -> Unit = {},
-    onStockClick: (StockSummaryItem) -> Unit = {}
+    onStockClick: (StockSummaryItem) -> Unit = {},
+    viewModel: ExploreViewModel = viewModel()
 ) {
-    val dummyGainers = remember {
-        listOf(
-            StockSummaryItem("Apple Inc.", "AAPL", "$195.23", "+2.1%"),
-            StockSummaryItem("Tesla Inc.", "TSLA", "$254.32", "+5.3%"),
-            StockSummaryItem("Netflix", "NFLX", "$410.23", "+1.4%"),
-            StockSummaryItem("Meta", "META", "$298.56", "+3.6%")
-        )
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val filterBy by viewModel.filterBy.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    val filteredGainers = viewModel.allGainers.filter {
+        matchesFilter(it, searchQuery, filterBy)
     }
 
-    val dummyLosers = remember {
-        listOf(
-            StockSummaryItem("Intel", "INTC", "$34.12", "-2.5%"),
-            StockSummaryItem("Nvidia", "NVDA", "$430.89", "-0.9%"),
-            StockSummaryItem("Google", "GOOG", "$135.67", "-1.3%"),
-            StockSummaryItem("Amazon", "AMZN", "$118.45", "-4.6%")
-        )
+    val filteredLosers = viewModel.allLosers.filter {
+        matchesFilter(it, searchQuery, filterBy)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        Text(
-            text = "Explore Stocks",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
-            )
-        )
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            kotlinx.coroutines.delay(1000)
+            isRefreshing = false
+        }
+    }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text("Search Stocks...") },
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing),
+        onRefresh = {
+            isRefreshing = true
+        }
+    )
+    {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            enabled = false  // Feature placeholder for now
-        )
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = "Explore Stocks",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
+            )
 
-        Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        SectionGridWithHeader(
-            title = "Top Gainers",
-            items = dummyGainers,
-            onViewAllClick = onViewAllGainersClick,
-            backgroundColor = Color(0xFFD0F5C9),
-            onStockClick = onStockClick
-        )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    placeholder = { Text("Search Stocks...") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    singleLine = true,
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.clearSearch() }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
+                    }
+                )
 
-        Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-        SectionGridWithHeader(
-            title = "Top Losers",
-            items = dummyLosers,
-            onViewAllClick = onViewAllLosersClick,
-            backgroundColor = Color(0xFFFADBD8),
-            onStockClick = onStockClick
-        )
+                FilterDropdown(
+                    selected = filterBy,
+                    onOptionSelected = { viewModel.updateFilterBy(it) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            SectionGridWithHeader(
+                title = "Top Gainers",
+                items = filteredGainers,
+                onViewAllClick = onViewAllGainersClick,
+                backgroundColor = Color(0xFFD0F5C9),
+                onStockClick = onStockClick
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            SectionGridWithHeader(
+                title = "Top Losers",
+                items = filteredLosers,
+                onViewAllClick = onViewAllLosersClick,
+                backgroundColor = Color(0xFFFADBD8),
+                onStockClick = onStockClick
+            )
+        }
     }
 }
+
+@Composable
+fun FilterDropdown(
+    selected: String,
+    onOptionSelected: (String) -> Unit
+) {
+    val options = listOf("Name", "Price", "Change")
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        OutlinedButton(onClick = { expanded = true }) {
+            Text(text = "By $selected")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach {
+                DropdownMenuItem(
+                    text = { Text(it) },
+                    onClick = {
+                        onOptionSelected(it)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+fun matchesFilter(item: StockSummaryItem, query: String, filterBy: String): Boolean {
+    val lowerQuery = query.lowercase()
+
+    return when (filterBy.lowercase()) {
+        "name" -> item.name.lowercase().contains(lowerQuery) || item.symbol.lowercase().contains(lowerQuery)
+        "price" -> item.price.filter { it.isDigit() || it == '.' }.contains(lowerQuery)
+        "change" -> item.changePercent.filter { it.isDigit() || it == '.' || it == '-' || it == '+' }.contains(lowerQuery)
+        else -> true
+    }
+}
+
 
 @Composable
 fun SectionGridWithHeader(
@@ -125,7 +199,7 @@ fun SectionGridWithHeader(
             StockCard(
                 stock = stock,
                 backgroundColor = backgroundColor,
-                onClick = { onStockClick(stock) }
+                onClick = { onStockClick(stock) },
             )
         }
     }

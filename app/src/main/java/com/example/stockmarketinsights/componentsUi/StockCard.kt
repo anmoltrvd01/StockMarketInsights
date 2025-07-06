@@ -14,10 +14,11 @@ import com.example.stockmarketinsights.dataModel.StockSummaryItem
 fun StockCard(
     stock: StockSummaryItem,
     backgroundColor: Color,
+    modifier: Modifier = Modifier, // ✅ Default value added here
     onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .padding(end = 8.dp)
             .width(160.dp)
             .height(100.dp)

@@ -5,48 +5,128 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun WatchlistScreen(
+    viewModel: WatchlistViewModel, // ✅ Accept viewModel
     onWatchlistClick: (String) -> Unit = {},
     onStockClick: (StockSummaryItem) -> Unit = {}
 ) {
-    val dummyWatchlists = remember {
-        listOf("Watchlist 1", "Watchlist 2")
-    }
+    val allItems by viewModel.watchlistItems.collectAsState()
+    val distinctWatchlists = allItems.map { it.watchlistName }.distinct()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text("Watchlists", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(12.dp))
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-        LazyColumn {
-            items(dummyWatchlists) { name ->
-                WatchlistCardSimple(name = name, onClick = {
-                    onWatchlistClick(name)
-                })
+    var renameDialogOpen by remember { mutableStateOf(false) }
+    var watchlistToRename by remember { mutableStateOf("") }
+    var newWatchlistName by remember { mutableStateOf("") }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .padding(padding)
+        ) {
+            Text("Watchlists", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyColumn {
+                items(distinctWatchlists) { name ->
+                    WatchlistCardSimple(
+                        name = name,
+                        onClick = {
+                            val stock = allItems.find { it.watchlistName == name }
+                            stock?.let {
+                                onStockClick(
+                                    StockSummaryItem(
+                                        it.stockName,
+                                        it.stockSymbol,
+                                        price = "N/A",
+                                        changePercent = "N/A"
+                                    )
+                                )
+                            }
+                        },
+                        onWatchlistClick = { onWatchlistClick(name) },
+                        onRenameClick = {
+                            watchlistToRename = it
+                            newWatchlistName = it
+                            renameDialogOpen = true
+                        },
+                        onDeleteClick = { nameToDelete ->
+                            viewModel.deleteWatchlistByName(nameToDelete)
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Deleted '$nameToDelete'")
+                            }
+                        }
+                    )
+                }
             }
         }
+    }
+
+    if (renameDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { renameDialogOpen = false },
+            title = { Text("Rename Watchlist") },
+            text = {
+                OutlinedTextField(
+                    value = newWatchlistName,
+                    onValueChange = { newWatchlistName = it },
+                    label = { Text("New name") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.renameWatchlist(watchlistToRename, newWatchlistName)
+                    renameDialogOpen = false
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Renamed to '$newWatchlistName'")
+                    }
+                }) {
+                    Text("Rename")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    renameDialogOpen = false
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
 @Composable
-fun WatchlistCardSimple(name: String, onClick: () -> Unit) {
+fun WatchlistCardSimple(
+    name: String,
+    onClick: () -> Unit,
+    onWatchlistClick: () -> Unit,
+    onRenameClick: (String) -> Unit,
+    onDeleteClick: (String) -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
-            .clickable { onClick() },
+            .clickable { onWatchlistClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -58,11 +138,45 @@ fun WatchlistCardSimple(name: String, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(name, style = MaterialTheme.typography.bodyLarge)
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Open $name"
-            )
+            Column {
+                Text(name, style = MaterialTheme.typography.bodyLarge)
+                Text("Tap arrow icon to view first stock", style = MaterialTheme.typography.bodySmall)
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Open stock"
+                    )
+                }
+
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Rename") },
+                            onClick = {
+                                showMenu = false
+                                onRenameClick(name)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            onClick = {
+                                showMenu = false
+                                onDeleteClick(name)
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }

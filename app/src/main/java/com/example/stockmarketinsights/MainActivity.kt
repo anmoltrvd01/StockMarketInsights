@@ -10,18 +10,32 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.stockmarketinsights.navigation.NavGraph
 import com.example.stockmarketinsights.navigation.Screen
+import com.example.stockmarketinsights.roomdb.*
 import com.example.stockmarketinsights.ui.theme.StockMarketInsightsTheme
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             StockMarketInsightsTheme {
-                MainScreen()
+                val context = LocalContext.current
+                val db = AppDatabase.getDatabase(context)
+                val repository = WatchlistRepository(db.watchlistDao())
+                val viewModelFactory = WatchlistViewModelFactory(repository)
+
+                val viewModel: WatchlistViewModel = viewModel(factory = viewModelFactory)
+
+                CompositionLocalProvider(LocalWatchlistViewModel provides viewModel) {
+                    MainScreen()
+                }
             }
         }
     }
