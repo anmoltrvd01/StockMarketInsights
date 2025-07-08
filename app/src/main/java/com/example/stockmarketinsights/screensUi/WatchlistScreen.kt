@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,11 +17,13 @@ import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchlistScreen(
-    viewModel: WatchlistViewModel, // ✅ Accept viewModel
+    viewModel: WatchlistViewModel,
     onWatchlistClick: (String) -> Unit = {},
-    onStockClick: (StockSummaryItem) -> Unit = {}
+    onStockClick: (StockSummaryItem) -> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     val allItems by viewModel.watchlistItems.collectAsState()
     val distinctWatchlists = allItems.map { it.watchlistName }.distinct()
@@ -33,7 +36,17 @@ fun WatchlistScreen(
     var newWatchlistName by remember { mutableStateOf("") }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Watchlists") },
+                actions = {
+                    IconButton(onClick = onSearchClick) {
+                        Icon(Icons.Default.Search, contentDescription = "Search Watchlists")
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -41,9 +54,6 @@ fun WatchlistScreen(
                 .padding(16.dp)
                 .padding(padding)
         ) {
-            Text("Watchlists", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(12.dp))
-
             LazyColumn {
                 items(distinctWatchlists) { name ->
                     WatchlistCardSimple(
