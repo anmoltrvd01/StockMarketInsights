@@ -45,6 +45,9 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
                         stock.price,
                         stock.changePercent
                     ))
+                },
+                onSearchClick = {
+                    navController.navigate(Screen.Search.route)
                 }
             )
         }
@@ -129,7 +132,6 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
             )
         }
 
-
         composable("watchlistSearch") {
             WatchlistSearchScreen(
                 viewModel = viewModel,
@@ -139,5 +141,20 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
                 }
             )
         }
+
+        composable(Screen.Search.route) {
+            SearchAllStocksScreen(
+                onStockClick = { stock ->
+                    navController.navigate(Screen.Details.withArgs(
+                        stock.name,
+                        stock.symbol,
+                        stock.price,
+                        stock.changePercent
+                    ))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
     }
 }

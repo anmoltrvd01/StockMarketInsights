@@ -10,6 +10,7 @@ sealed class Screen(val route: String) {
     object Watchlist : Screen("watchlist")
     object Details : Screen("details/{name}/{symbol}/{price}/{changePercent}")
     object WatchlistDetail : Screen("watchlistDetail/{watchlistName}")
+    object Search : Screen("search")
 
     fun withArgs(vararg args: String): String {
         return buildString {
