@@ -1,5 +1,6 @@
 package com.example.stockmarketinsights.screensUi
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,12 +15,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.viewmodel.ExploreViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.valentinilk.shimmer.*
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +35,9 @@ fun ExploreScreen(
     viewModel: ExploreViewModel = viewModel()
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
 
     val allGainers = viewModel.allGainers
     val allLosers = viewModel.allLosers
@@ -44,16 +49,26 @@ fun ExploreScreen(
         else -> "Neutral"
     }
 
+    LaunchedEffect(Unit) {
+        delay(2000)
+        isLoading = false
+    }
+
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
             delay(1000)
             isRefreshing = false
+            isLoading = true
+            delay(1000)
+            isLoading = false
         }
     }
 
     SwipeRefresh(
         state = rememberSwipeRefreshState(isRefreshing),
-        onRefresh = { isRefreshing = true }
+        onRefresh = {
+            isRefreshing = true
+        }
     ) {
         Scaffold(
             topBar = {
@@ -83,30 +98,30 @@ fun ExploreScreen(
             }
         ) { innerPadding ->
             LazyColumn(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 item { MarketMoodBanner(marketMood) }
-
                 item { MarketIndexWidget(nifty = "22,753.80", sensex = "75,410.39") }
 
                 item {
-                    SectionGridWithHeader(
+                    if (isLoading) ShimmerGridPlaceholder(shimmerInstance)
+                    else SectionGridWithHeader(
                         title = "Trending Now",
                         items = trendingStocks,
-                        onViewAllClick = {}, // No View All
-                        backgroundColor = Color.Transparent, // Will be dynamic inside
+                        onViewAllClick = {},
+                        backgroundColor = Color.Transparent,
                         onStockClick = onStockClick,
-                        showViewAll = false,
-                        dynamicColorByChange = true
+                        showViewAll = false
                     )
                 }
 
                 item {
-                    SectionGridWithHeader(
+                    if (isLoading) ShimmerGridPlaceholder(shimmerInstance)
+                    else SectionGridWithHeader(
                         title = "Top Gainers",
                         items = allGainers,
                         onViewAllClick = onViewAllGainersClick,
@@ -116,7 +131,8 @@ fun ExploreScreen(
                 }
 
                 item {
-                    SectionGridWithHeader(
+                    if (isLoading) ShimmerGridPlaceholder(shimmerInstance)
+                    else SectionGridWithHeader(
                         title = "Top Losers",
                         items = allLosers,
                         onViewAllClick = onViewAllLosersClick,
@@ -199,8 +215,7 @@ fun SectionGridWithHeader(
     onViewAllClick: () -> Unit,
     backgroundColor: Color,
     onStockClick: (StockSummaryItem) -> Unit,
-    showViewAll: Boolean = true,
-    dynamicColorByChange: Boolean = false
+    showViewAll: Boolean = true
 ) {
     val displayItems = items.take(6)
 
@@ -245,16 +260,36 @@ fun SectionGridWithHeader(
             userScrollEnabled = false
         ) {
             items(displayItems) { stock ->
-                val dynamicBg = if (dynamicColorByChange) {
-                    if (stock.changePercent.contains("-")) Color(0xFFFFD9D9) else Color(0xFFB2FFCC)
-                } else backgroundColor
-
                 StockCard(
                     stock = stock,
-                    backgroundColor = dynamicBg,
+                    backgroundColor = backgroundColor,
                     onClick = { onStockClick(stock) }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun ShimmerGridPlaceholder(shimmer: Shimmer) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 200.dp, max = 400.dp)
+            .shimmer(shimmer),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        userScrollEnabled = false
+    ) {
+        items(6) {
+            Box(
+                modifier = Modifier
+                    .height(120.dp)
+                    .fillMaxWidth()
+                    .padding(4.dp)
+                    .background(Color.LightGray, shape = MaterialTheme.shapes.medium)
+            )
         }
     }
 }

@@ -90,6 +90,7 @@ dependencies {
     implementation ("androidx.compose.material:material-icons-extended")
 
     implementation("com.google.accompanist:accompanist-swiperefresh:0.31.5-beta")
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.0.5")
 
 
 
