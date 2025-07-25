@@ -26,4 +26,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "StockMarketInsights"
-include(":app")
+include(":app",":backend")

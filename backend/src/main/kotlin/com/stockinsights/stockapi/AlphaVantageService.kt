@@ -10,7 +10,6 @@ import org.springframework.web.client.RestTemplate
 class AlphaVantageService(
     private val restTemplate: RestTemplate
 ) {
-
     @Value("\${alpha.api.key}")
     private lateinit var apiKey: String
 
@@ -22,3 +21,4 @@ class AlphaVantageService(
         return restTemplate.getForObject(url, String::class.java) ?: "Error fetching data"
     }
 }
+
