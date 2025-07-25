@@ -29,3 +29,9 @@ local.properties
 
 # Logs
 *.log
+
+# Backend sensitive files to ignore
+backend/.env
+backend/src/main/resources/application.properties
+
+

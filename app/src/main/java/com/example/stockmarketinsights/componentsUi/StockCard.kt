@@ -14,7 +14,7 @@ import com.example.stockmarketinsights.dataModel.StockSummaryItem
 fun StockCard(
     stock: StockSummaryItem,
     backgroundColor: Color,
-    modifier: Modifier = Modifier, // ✅ Default value added here
+    modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     Card(
