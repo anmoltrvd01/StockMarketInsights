@@ -88,11 +88,6 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
             val stock = StockSummaryItem(name, symbol, price, changePercent)
             DetailsScreen(stock = stock, navController = navController)
         }
-
-        composable(Screen.Product.route) {
-            ProductScreen()
-        }
-
         composable(Screen.Watchlist.route) {
             WatchlistScreen(
                 viewModel = viewModel,

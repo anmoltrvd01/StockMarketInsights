@@ -29,7 +29,10 @@ fun SearchAllStocksScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val filterBy by viewModel.filterBy.collectAsState()
 
-    val allStocks = viewModel.allGainers + viewModel.allLosers
+    val allGainers by viewModel.allGainers.collectAsState()
+    val allLosers by viewModel.allLosers.collectAsState()
+    val allStocks = allGainers + allLosers
+
     val filteredStocks = allStocks.filter {
         matchesFilter(it, searchQuery, filterBy)
     }

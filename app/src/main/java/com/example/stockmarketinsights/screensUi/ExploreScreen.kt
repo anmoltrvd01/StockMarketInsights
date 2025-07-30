@@ -34,8 +34,8 @@ fun ExploreScreen(
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val allGainers = viewModel.allGainers
-    val allLosers = viewModel.allLosers
+    val allGainers by viewModel.allGainers.collectAsState()
+    val allLosers by viewModel.allLosers.collectAsState()
     val trendingStocks = (allGainers + allLosers).shuffled().take(4)
 
     val marketMood = when {

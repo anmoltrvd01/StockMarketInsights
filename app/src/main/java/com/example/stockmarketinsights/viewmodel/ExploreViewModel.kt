@@ -1,13 +1,18 @@
 package com.example.stockmarketinsights.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.repository.StockRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class ExploreViewModel : ViewModel() {
+class ExploreViewModel(
+    private val repository: StockRepository = StockRepository()
+) : ViewModel() {
 
+    // Search & filter state
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
@@ -26,17 +31,43 @@ class ExploreViewModel : ViewModel() {
         _filterBy.value = option
     }
 
-    val allGainers = listOf(
-        StockSummaryItem("Apple Inc.", "AAPL", "$195.23", "+2.1%"),
-        StockSummaryItem("Tesla Inc.", "TSLA", "$254.32", "+5.3%"),
-        StockSummaryItem("Netflix", "NFLX", "$410.23", "+1.4%"),
-        StockSummaryItem("Meta", "META", "$298.56", "+3.6%")
-    )
+    // Gainers and Losers state
+    private val _allGainers = MutableStateFlow<List<StockSummaryItem>>(emptyList())
+    val allGainers: StateFlow<List<StockSummaryItem>> = _allGainers
 
-    val allLosers = listOf(
-        StockSummaryItem("Intel", "INTC", "$34.12", "-2.5%"),
-        StockSummaryItem("Nvidia", "NVDA", "$430.89", "-0.9%"),
-        StockSummaryItem("Google", "GOOG", "$135.67", "-1.3%"),
-        StockSummaryItem("Amazon", "AMZN", "$118.45", "-4.6%")
-    )
+    private val _allLosers = MutableStateFlow<List<StockSummaryItem>>(emptyList())
+    val allLosers: StateFlow<List<StockSummaryItem>> = _allLosers
+
+    init {
+        fetchTopStocks("gainers")
+        fetchTopStocks("losers")
+    }
+
+    private fun fetchTopStocks(type: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.getTopStocks(type)
+                if (response.isSuccessful) {
+                    val rawData = response.body() ?: emptyList()
+                    val stocks = rawData.map { map ->
+                        StockSummaryItem(
+                            name = map["name"] ?: "N/A",
+                            symbol = map["symbol"] ?: "N/A",
+                            price = map["price"] ?: "N/A",
+                            changePercent = map["changePercent"] ?: "N/A"
+                        )
+                    }
+                    if (type == "gainers") {
+                        _allGainers.value = stocks
+                    } else {
+                        _allLosers.value = stocks
+                    }
+                } else {
+                    println("Error fetching $type: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }
