@@ -14,4 +14,5 @@ class CacheConfig {
     fun cacheManager(): CacheManager {
         return ConcurrentMapCacheManager("stockOverview", "stockQuote", "stockSearch", "historicalData")
     }
+
 }
