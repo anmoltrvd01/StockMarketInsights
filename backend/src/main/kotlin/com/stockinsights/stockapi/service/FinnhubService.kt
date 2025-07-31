@@ -11,6 +11,7 @@ class FinnhubService(private val restTemplate: RestTemplate) {
 
     @Value("\${finnhub.api.key}")
     private lateinit var apiKey: String
+    fun apiKey(): String = apiKey
 
     private val baseUrl = "https://finnhub.io/api/v1"
 

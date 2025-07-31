@@ -6,7 +6,6 @@ data class FinnhubQuoteResponse(
     val h: Double, // high price
     val l: Double, // low price
     val pc: Double // previous close
-
 )
 
 data class CandlePoint(
@@ -16,3 +15,6 @@ data class CandlePoint(
     val low: Double,
     val close: Double
 )
+
+fun FinnhubQuoteResponse.dp(): Double =
+    if (pc != 0.0) ((c - pc) / pc) * 100 else 0.0
