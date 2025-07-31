@@ -26,8 +26,6 @@ class StockController(private val alphaVantageService: AlphaVantageService) {
     fun getTopStocks(@RequestParam type: String): List<Map<String, String>> =
         alphaVantageService.getTopStocks(type)
 
-    // ✅ NEW BATCH ENDPOINTS
-
     @GetMapping("/quotes")
     fun getMultipleQuotes(@RequestParam symbols: List<String>): Map<String, String> =
         alphaVantageService.getMultipleQuotes(symbols)
