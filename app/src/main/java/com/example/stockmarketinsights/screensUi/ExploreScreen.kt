@@ -20,7 +20,7 @@ import com.example.stockmarketinsights.viewmodel.ExploreViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +33,7 @@ fun ExploreScreen(
     viewModel: ExploreViewModel = viewModel()
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val allGainers by viewModel.allGainers.collectAsState()
     val allLosers by viewModel.allLosers.collectAsState()
@@ -44,16 +45,15 @@ fun ExploreScreen(
         else -> "Neutral"
     }
 
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            delay(1000)
-            isRefreshing = false
-        }
-    }
-
     SwipeRefresh(
         state = rememberSwipeRefreshState(isRefreshing),
-        onRefresh = { isRefreshing = true }
+        onRefresh = {
+            isRefreshing = true
+            coroutineScope.launch {
+                viewModel.refreshData()
+                isRefreshing = false
+            }
+        }
     ) {
         Scaffold(
             topBar = {
@@ -98,7 +98,7 @@ fun ExploreScreen(
                         title = "Trending Now",
                         items = trendingStocks,
                         onViewAllClick = {}, // No View All
-                        backgroundColor = Color.Transparent, // Will be dynamic inside
+                        backgroundColor = Color.Transparent, // Dynamic inside
                         onStockClick = onStockClick,
                         showViewAll = false,
                         dynamicColorByChange = true
