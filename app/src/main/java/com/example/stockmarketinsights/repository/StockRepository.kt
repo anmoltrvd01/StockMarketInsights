@@ -1,44 +1,21 @@
 package com.example.stockmarketinsights.repository
 
+import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.network.RetrofitInstance
-import retrofit2.Response
 
 class StockRepository {
 
     private val api = RetrofitInstance.api
 
-    suspend fun getQuote(symbol: String): Response<String> {
-        return api.getQuote(symbol)
+    suspend fun getTopGainers(): List<StockSummaryItem> {
+        return api.getTopGainers()
     }
 
-    suspend fun getMultipleQuotes(symbols: List<String>): Map<String, String>? {
-        val response = api.getMultipleQuotes(symbols)
-        return if (response.isSuccessful) response.body() else null
+    suspend fun getTopLosers(): List<StockSummaryItem> {
+        return api.getTopLosers()
     }
 
-    suspend fun getOverview(symbol: String): Response<String> {
-        return api.getOverview(symbol)
-    }
-
-    suspend fun getMultipleOverviews(symbols: List<String>): Map<String, String>? {
-        val response = api.getMultipleOverviews(symbols)
-        return if (response.isSuccessful) response.body() else null
-    }
-
-    suspend fun getTimeSeries(symbol: String): Response<String> {
-        return api.getTimeSeries(symbol)
-    }
-
-    suspend fun getMultipleTimeSeries(symbols: List<String>): Map<String, String>? {
-        val response = api.getMultipleTimeSeries(symbols)
-        return if (response.isSuccessful) response.body() else null
-    }
-
-    suspend fun searchSymbol(keywords: String): Response<String> {
-        return api.searchSymbol(keywords)
-    }
-
-    suspend fun getTopStocks(type: String): Response<List<Map<String, String>>> {
-        return api.getTopStocks(type)
+    suspend fun searchStocks(query: String): List<StockSummaryItem> {
+        return api.searchStocks(query)
     }
 }
