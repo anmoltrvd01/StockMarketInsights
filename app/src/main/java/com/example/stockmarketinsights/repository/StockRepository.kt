@@ -1,21 +1,30 @@
 package com.example.stockmarketinsights.repository
 
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.dataModel.MarketIndices
 import com.example.stockmarketinsights.network.RetrofitInstance
+import retrofit2.Response
 
 class StockRepository {
 
     private val api = RetrofitInstance.api
 
-    suspend fun getTopGainers(): List<StockSummaryItem> {
-        return api.getTopGainers()
+    // Top Gainers/Losers
+    suspend fun getTopStocks(type: String): Response<List<Map<String, String>>> {
+        return if (type == "gainers") {
+            api.getTopGainers()
+        } else {
+            api.getTopLosers()
+        }
     }
 
-    suspend fun getTopLosers(): List<StockSummaryItem> {
-        return api.getTopLosers()
-    }
-
-    suspend fun searchStocks(query: String): List<StockSummaryItem> {
+    // Search API
+    suspend fun searchSymbol(query: String): Response<String> {
         return api.searchStocks(query)
+    }
+
+    // Market indices (Nifty & Sensex)
+    suspend fun getMarketIndices(): Response<MarketIndices> {
+        return api.getMarketIndices()
     }
 }

@@ -51,22 +51,29 @@ class ExploreViewModel(
     private val _allLosers = MutableStateFlow<List<StockSummaryItem>>(emptyList())
     val allLosers: StateFlow<List<StockSummaryItem>> = _allLosers
 
+    // Market indices (Nifty, Sensex)
+    private val _marketIndices = MutableStateFlow<Pair<String, String>?>(null)
+    val marketIndices: StateFlow<Pair<String, String>?> = _marketIndices
+
     // Keep track of active jobs so we can cancel them
     private var gainersJob: Job? = null
     private var losersJob: Job? = null
+    private var indicesJob: Job? = null
+    private var searchJob: Job? = null
 
     init {
         refreshData()
     }
 
-    //Refresh both gainers & losers safely
+    // Refresh all explore data
     fun refreshData() {
-        // cancel any running jobs
         gainersJob?.cancel()
         losersJob?.cancel()
+        indicesJob?.cancel()
 
         gainersJob = fetchTopStocks("gainers")
         losersJob = fetchTopStocks("losers")
+        indicesJob = fetchMarketIndices()
     }
 
     private fun fetchTopStocks(type: String): Job {
@@ -97,10 +104,27 @@ class ExploreViewModel(
         }
     }
 
+    private fun fetchMarketIndices(): Job {
+        return viewModelScope.launch {
+            try {
+                val response = repository.getMarketIndices()
+                if (response.isSuccessful) {
+                    val indices = response.body()
+                    if (indices != null) {
+                        _marketIndices.value = indices.nifty to indices.sensex
+                    }
+                } else {
+                    println("Error fetching indices: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     // Search API integration
-    private var searchJob: Job? = null
     private fun searchStocks(query: String) {
-        searchJob?.cancel() // cancel old search if new query comes in
+        searchJob?.cancel()
         searchJob = viewModelScope.launch {
             try {
                 val response = repository.searchSymbol(query)

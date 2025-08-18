@@ -2,6 +2,12 @@ package com.example.stockmarketinsights.dataModel
 
 import java.io.Serializable
 
+
+data class MarketIndices(
+    val nifty: String,
+    val sensex: String
+)
+
 data class StockSummaryItem(
     val name: String,
     val symbol: String,

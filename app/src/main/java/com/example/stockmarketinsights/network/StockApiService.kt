@@ -4,7 +4,15 @@ import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+data class MarketIndicesResponse(
+    val nifty: String,
+    val sensex: String
+)
+
 interface StockApiService {
+
+    @GET("market/indices")
+    suspend fun getMarketIndices(): MarketIndicesResponse
 
     // Backend: /api/stocks/top/gainers
     @GET("api/stocks/top/gainers")
