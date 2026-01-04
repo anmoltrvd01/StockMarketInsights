@@ -8,12 +8,11 @@ data class MarketIndices(
     val sensex: String
 )
 
-data class StockSummaryItem(
-    val name: String,
+data class UiStockItem(
     val symbol: String,
-    val price: String,
-    val changePercent: String
-) : Serializable
+    val name: String
+)
+
 
 data class StockDetail(
     val name: String,

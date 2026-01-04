@@ -2,43 +2,48 @@ package com.example.stockmarketinsights.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.stockmarketinsights.network.CompanyOverview
+import com.example.stockmarketinsights.network.DailySeries
 import com.example.stockmarketinsights.repository.StockRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class StockViewModel : ViewModel() {
+class StockViewModel(
+    private val repository: StockRepository = StockRepository()
+) : ViewModel() {
 
-    private val repository = StockRepository()
+    // ---------------- Company Overview ----------------
 
-    private val _quotes = MutableStateFlow<Map<String, String>>(emptyMap())
-    val quotes: StateFlow<Map<String, String>> = _quotes
+    private val _companyOverview = MutableStateFlow<CompanyOverview?>(null)
+    val companyOverview: StateFlow<CompanyOverview?> = _companyOverview
 
-    private val _overviews = MutableStateFlow<Map<String, String>>(emptyMap())
-    val overviews: StateFlow<Map<String, String>> = _overviews
+    // ---------------- Stock Price Chart ----------------
 
-    private val _timeSeries = MutableStateFlow<Map<String, String>>(emptyMap())
-    val timeSeries: StateFlow<Map<String, String>> = _timeSeries
+    private val _dailyPrices = MutableStateFlow<List<DailySeries>>(emptyList())
+    val dailyPrices: StateFlow<List<DailySeries>> = _dailyPrices
 
-    fun loadQuotes(symbols: List<String>) {
+    // ---------------- API Calls ----------------
+
+    fun loadCompanyDetails(symbol: String) {
         viewModelScope.launch {
-            val result = repository.getMultipleQuotes(symbols)
-            result?.let { _quotes.value = it }
+            try {
+                _companyOverview.value = repository.getCompanyOverview(symbol)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _companyOverview.value = null
+            }
         }
     }
 
-    fun loadOverviews(symbols: List<String>) {
+    fun loadDailyPrices(symbol: String) {
         viewModelScope.launch {
-            val result = repository.getMultipleOverviews(symbols)
-            result?.let { _overviews.value = it }
-        }
-    }
-
-    fun loadTimeSeries(symbols: List<String>) {
-        viewModelScope.launch {
-            val result = repository.getMultipleTimeSeries(symbols)
-            result?.let { _timeSeries.value = it }
+            try {
+                _dailyPrices.value = repository.getDailyPrices(symbol)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _dailyPrices.value = emptyList()
+            }
         }
     }
 }
-

@@ -1,30 +1,27 @@
 package com.example.stockmarketinsights.repository
 
-import com.example.stockmarketinsights.dataModel.StockSummaryItem
-import com.example.stockmarketinsights.dataModel.MarketIndices
+import com.example.stockmarketinsights.BuildConfig
+import com.example.stockmarketinsights.dataModel.UiStockItem
+import com.example.stockmarketinsights.network.AlphaVantageApiService
 import com.example.stockmarketinsights.network.RetrofitInstance
-import retrofit2.Response
 
 class StockRepository {
 
-    private val api = RetrofitInstance.api
+    private val api: AlphaVantageApiService = RetrofitInstance.api
+    private val apiKey = BuildConfig.ALPHA_VANTAGE_API_KEY
 
-    // Top Gainers/Losers
-    suspend fun getTopStocks(type: String): Response<List<Map<String, String>>> {
-        return if (type == "gainers") {
-            api.getTopGainers()
-        } else {
-            api.getTopLosers()
+
+    suspend fun searchStocks(query: String): List<UiStockItem> {
+        val response = api.searchSymbols(
+            keywords = query,
+            apiKey = apiKey
+        )
+
+        return response.bestMatches.map {
+            UiStockItem(
+                symbol = it.symbol,
+                name = it.name
+            )
         }
-    }
-
-    // Search API
-    suspend fun searchSymbol(query: String): Response<String> {
-        return api.searchStocks(query)
-    }
-
-    // Market indices (Nifty & Sensex)
-    suspend fun getMarketIndices(): Response<MarketIndices> {
-        return api.getMarketIndices()
     }
 }
