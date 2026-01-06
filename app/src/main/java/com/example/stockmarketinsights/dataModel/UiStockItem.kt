@@ -10,7 +10,10 @@ data class MarketIndices(
 
 data class UiStockItem(
     val symbol: String,
-    val name: String
+    val name: String,
+    val price: String = "--",
+    val changePercent: String = "--",
+    val volume: String = "--"
 )
 
 
