@@ -3,6 +3,7 @@ package com.example.stockmarketinsights.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.stockmarketinsights.dataModel.UiStockItem
+import com.example.stockmarketinsights.dataModel.UiState
 import com.example.stockmarketinsights.repository.StockRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +18,10 @@ class ExploreViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
-    // Search results (UI model only)
-    private val _searchResults = MutableStateFlow<List<UiStockItem>>(emptyList())
-    val searchResults: StateFlow<List<UiStockItem>> = _searchResults
+    // Search results wrapped in UiState
+    private val _searchResults =
+        MutableStateFlow<UiState<List<UiStockItem>>>(UiState.Success(emptyList()))
+    val searchResults: StateFlow<UiState<List<UiStockItem>>> = _searchResults
 
     private var searchJob: Job? = null
 
@@ -27,7 +29,7 @@ class ExploreViewModel(
         _searchQuery.value = newQuery
 
         if (newQuery.isBlank()) {
-            _searchResults.value = emptyList()
+            _searchResults.value = UiState.Success(emptyList())
             return
         }
 
@@ -36,17 +38,18 @@ class ExploreViewModel(
 
     fun clearSearch() {
         _searchQuery.value = ""
-        _searchResults.value = emptyList()
+        _searchResults.value = UiState.Success(emptyList())
     }
 
     private fun searchStocks(query: String) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
+            _searchResults.value = UiState.Loading
             try {
-                _searchResults.value = repository.searchStocks(query)
+                val result = repository.searchSymbol(query)
+                _searchResults.value = UiState.Success(result)
             } catch (e: Exception) {
-                e.printStackTrace()
-                _searchResults.value = emptyList()
+                _searchResults.value = UiState.Error("Unable to fetch stocks")
             }
         }
     }
