@@ -19,4 +19,8 @@ interface StockDao {
 
     @Query("DELETE FROM stocks")
     suspend fun clearStocks()
+
+    @Query("SELECT * FROM stocks WHERE symbol LIKE :query OR name LIKE :query")
+    suspend fun searchStocks(query: String): List<StockEntity>
 }
+

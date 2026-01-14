@@ -20,6 +20,9 @@ import com.example.stockmarketinsights.roomdb.*
 import com.example.stockmarketinsights.ui.theme.StockMarketInsightsTheme
 import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
 import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
+import com.example.stockmarketinsights.roomdb.AppDatabase
+import com.example.stockmarketinsights.roomdb.WatchlistRepository
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
