@@ -2,39 +2,51 @@ package com.example.stockmarketinsights.repository
 
 import com.example.stockmarketinsights.BuildConfig
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.network.AlphaVantageApiService
 import com.example.stockmarketinsights.network.RetrofitInstance
+import com.example.stockmarketinsights.roomdb.AppDatabase
+import com.example.stockmarketinsights.utils.ApiRateLimiter
+import com.example.stockmarketinsights.utils.toEntity
 import com.example.stockmarketinsights.utils.toStockSummaryItem
+import com.example.stockmarketinsights.utils.toUi
 
-class StockRepository {
+class StockRepository(
+    private val api: AlphaVantageApiService = RetrofitInstance.api,
+    private val db: AppDatabase
+) {
 
-    private val api = RetrofitInstance.api
+    private val stockDao = db.stockDao()
     private val apiKey = BuildConfig.ALPHA_VANTAGE_API_KEY
 
     suspend fun getTopStocks(type: String): List<StockSummaryItem> {
-        val response = api.getTopGainersAndLosers(apiKey = apiKey)
 
-        val stocks = if (type == "gainers") {
+        //Always try cache first
+        val cached = stockDao.getAllStocks()
+        if (cached.isNotEmpty()) {
+            return cached.map { it.toUi() }
+        }
+
+        // Enforce rate limit
+        if (!ApiRateLimiter.canCallApi()) {
+            return emptyList() // safe fallback
+        }
+
+        //API call
+        ApiRateLimiter.recordCall()
+
+        val response = api.getTopGainersAndLosers(apiKey = apiKey)
+        val apiStocks = if (type == "gainers") {
             response.top_gainers
         } else {
             response.top_losers
         }
 
-        return stocks.map { it.toStockSummaryItem() }
-    }
+        val uiStocks = apiStocks.map { it.toStockSummaryItem() }
 
-    suspend fun searchStocks(query: String): List<StockSummaryItem> {
-        val response = api.searchSymbols(
-            keywords = query,
-            apiKey = apiKey
-        )
+        // Save to cache
+        stockDao.insertStocks(uiStocks.map { it.toEntity() })
 
-        return response.bestMatches.map {
-            StockSummaryItem(
-                name = it.name,
-                symbol = it.symbol,
-                price = "--",
-                changePercent = "--"
-            )
-        }
+        return uiStocks
     }
 }
+
