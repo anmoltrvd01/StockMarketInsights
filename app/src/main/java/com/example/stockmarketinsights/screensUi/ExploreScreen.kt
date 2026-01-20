@@ -9,20 +9,32 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.stockmarketinsights.dataModel.UiState
+import com.example.stockmarketinsights.repository.StockRepository
+import com.example.stockmarketinsights.roomdb.AppDatabase
 import com.example.stockmarketinsights.viewmodel.ExploreViewModel
+import com.example.stockmarketinsights.viewmodel.ExploreViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(
     modifier: Modifier = Modifier,
-    onStockClick: (String) -> Unit = {},
-    viewModel: ExploreViewModel = viewModel()
+    onStockClick: (String) -> Unit = {}
 ) {
+
+
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val repository = remember { StockRepository(context = context, db = db) }
+
+    val viewModel: ExploreViewModel = viewModel(
+        factory = ExploreViewModelFactory(repository)
+    )
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchState by viewModel.searchResults.collectAsState()
@@ -48,7 +60,7 @@ fun ExploreScreen(
     ) { padding ->
 
         LazyColumn(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
@@ -65,7 +77,7 @@ fun ExploreScreen(
                 )
             }
 
-            // UI STATE HANDLING
+            //UI State handling
             when (searchState) {
 
                 is UiState.Loading -> {
