@@ -25,52 +25,34 @@ fun safeDecode(input: String?): String {
 }
 
 @Composable
-fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+fun NavGraph(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val repository = WatchlistRepository(db.watchlistDao())
-    val viewModel: WatchlistViewModel = viewModel(factory = WatchlistViewModelFactory(repository))
+    val watchlistViewModel: WatchlistViewModel =
+        viewModel(factory = WatchlistViewModelFactory(repository))
 
-    NavHost(navController = navController, startDestination = Screen.Explore.route, modifier = modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Explore.route,
+        modifier = modifier
+    ) {
 
+        //  EXPLORE
         composable(Screen.Explore.route) {
             ExploreScreen(
                 modifier = modifier,
-                onViewAllGainersClick = { navController.navigate("viewall/gainers") },
-                onViewAllLosersClick = { navController.navigate("viewall/losers") },
-                onStockClick = { stock ->
-                    navController.navigate(Screen.Details.withArgs(
-                        stock.name,
-                        stock.symbol,
-                        stock.price,
-                        stock.changePercent
-                    ))
-                },
-                onSearchClick = {
+                onStockClick = { symbol ->
+                    // navigate only with symbol for now
                     navController.navigate(Screen.Search.route)
                 }
             )
         }
 
-        composable(
-            route = "viewall/{category}",
-            arguments = listOf(navArgument("category") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val category = backStackEntry.arguments?.getString("category") ?: "gainers"
-            ViewAllScreen(
-                navController = navController,
-                category = category,
-                onStockClick = { stock ->
-                    navController.navigate(Screen.Details.withArgs(
-                        stock.name,
-                        stock.symbol,
-                        stock.price,
-                        stock.changePercent
-                    ))
-                }
-            )
-        }
-
+        // DETAILS
         composable(
             route = "details/{name}/{symbol}/{price}/{changePercent}",
             arguments = listOf(
@@ -85,22 +67,37 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
             val price = safeDecode(backStackEntry.arguments?.getString("price"))
             val changePercent = safeDecode(backStackEntry.arguments?.getString("changePercent"))
 
-            val stock = StockSummaryItem(name, symbol, price, changePercent)
-            DetailsScreen(stock = stock, navController = navController)
+            val stock = StockSummaryItem(
+                name = name,
+                symbol = symbol,
+                price = price,
+                changePercent = changePercent
+            )
+
+            DetailsScreen(
+                stock = stock,
+                navController = navController
+            )
         }
+
+        // WATCHLIST
         composable(Screen.Watchlist.route) {
             WatchlistScreen(
-                viewModel = viewModel,
+                viewModel = watchlistViewModel,
                 onStockClick = { stock ->
-                    navController.navigate(Screen.Details.withArgs(
-                        stock.name,
-                        stock.symbol,
-                        stock.price,
-                        stock.changePercent
-                    ))
+                    navController.navigate(
+                        Screen.Details.withArgs(
+                            stock.name,
+                            stock.symbol,
+                            stock.price,
+                            stock.changePercent
+                        )
+                    )
                 },
                 onWatchlistClick = { name ->
-                    navController.navigate(Screen.WatchlistDetail.withArgs(name))
+                    navController.navigate(
+                        Screen.WatchlistDetail.withArgs(name)
+                    )
                 },
                 onSearchClick = {
                     navController.navigate("watchlistSearch")
@@ -110,46 +107,56 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
 
         composable(
             route = "watchlistDetail/{watchlistName}",
-            arguments = listOf(navArgument("watchlistName") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("watchlistName") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val watchlistName = safeDecode(backStackEntry.arguments?.getString("watchlistName"))
+            val watchlistName =
+                safeDecode(backStackEntry.arguments?.getString("watchlistName"))
+
             WatchlistDetailScreen(
                 watchlistName = watchlistName,
                 navController = navController,
                 onStockClick = { stock ->
-                    navController.navigate(Screen.Details.withArgs(
-                        stock.name,
-                        stock.symbol,
-                        stock.price,
-                        stock.changePercent
-                    ))
+                    navController.navigate(
+                        Screen.Details.withArgs(
+                            stock.name,
+                            stock.symbol,
+                            stock.price,
+                            stock.changePercent
+                        )
+                    )
                 }
             )
         }
 
         composable("watchlistSearch") {
             WatchlistSearchScreen(
-                viewModel = viewModel,
+                viewModel = watchlistViewModel,
                 onBack = { navController.popBackStack() },
                 onWatchlistClick = { name ->
-                    navController.navigate(Screen.WatchlistDetail.withArgs(name))
+                    navController.navigate(
+                        Screen.WatchlistDetail.withArgs(name)
+                    )
                 }
             )
         }
 
+        // GLOBAL SEARCH
         composable(Screen.Search.route) {
             SearchAllStocksScreen(
                 onStockClick = { stock ->
-                    navController.navigate(Screen.Details.withArgs(
-                        stock.name,
-                        stock.symbol,
-                        stock.price,
-                        stock.changePercent
-                    ))
+                    navController.navigate(
+                        Screen.Details.withArgs(
+                            stock.name,
+                            stock.symbol,
+                            stock.price,
+                            stock.changePercent
+                        )
+                    )
                 },
                 onBack = { navController.popBackStack() }
             )
         }
-
     }
 }

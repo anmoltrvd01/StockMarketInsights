@@ -2,6 +2,8 @@ package com.example.stockmarketinsights.repository
 
 import android.content.Context
 import com.example.stockmarketinsights.BuildConfig
+import com.example.stockmarketinsights.dataModel.CompanyOverview
+import com.example.stockmarketinsights.dataModel.DailySeries
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.network.AlphaVantageApiService
 import com.example.stockmarketinsights.network.RetrofitInstance
@@ -72,6 +74,33 @@ class StockRepository(
         ApiRateLimiter.recordCall()
         val response = api.searchSymbols(keywords = query, apiKey = apiKey)
         return response.bestMatches.map { it.toStockSummaryItem() }
+    }
+
+    suspend fun getTopGainers(): List<StockSummaryItem> {
+        return getTopStocks("gainers")
+    }
+
+    suspend fun getTopLosers(): List<StockSummaryItem> {
+        return getTopStocks("losers")
+    }
+
+    suspend fun getCompanyOverview(symbol: String): CompanyOverview {
+        // TODO: Replace with actual API call later
+        return CompanyOverview(
+            symbol = symbol,
+            name = "Company $symbol",
+            description = "Description for $symbol",
+            sector = "Technology",
+            industry = "Software"
+        )
+    }
+
+    suspend fun getDailyPrices(symbol: String): List<DailySeries> {
+        // TODO: Replace with actual API call later
+        return listOf(
+            DailySeries(date = "2026-01-20", open = 100.0, high = 105.0, low = 98.0, close = 102.0, volume = 10000),
+            DailySeries(date = "2026-01-19", open = 102.0, high = 106.0, low = 101.0, close = 104.0, volume = 12000)
+        )
     }
 
 }

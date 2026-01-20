@@ -14,6 +14,7 @@ class ExploreViewModel(
     private val repository: StockRepository
 ) : ViewModel() {
 
+    //SEARCH
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
@@ -43,6 +44,38 @@ class ExploreViewModel(
                 _searchResults.value = UiState.Success(result)
             } catch (e: Exception) {
                 _searchResults.value = UiState.Error("Unable to fetch stocks")
+            }
+        }
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _searchResults.value = UiState.Success(emptyList())
+    }
+
+    // FILTER
+    private val _filterBy = MutableStateFlow("name")  // default filter
+    val filterBy: StateFlow<String> = _filterBy
+
+    fun updateFilterBy(newFilter: String) {
+        _filterBy.value = newFilter
+    }
+
+    //STOCK DATA FOR SEARCH ALL
+    private val _allGainers = MutableStateFlow<List<StockSummaryItem>>(emptyList())
+    val allGainers: StateFlow<List<StockSummaryItem>> = _allGainers
+
+    private val _allLosers = MutableStateFlow<List<StockSummaryItem>>(emptyList())
+    val allLosers: StateFlow<List<StockSummaryItem>> = _allLosers
+
+    fun fetchAllStocks() {
+        viewModelScope.launch {
+            try {
+                _allGainers.value = repository.getTopGainers() // returns List<StockSummaryItem>
+                _allLosers.value = repository.getTopLosers()   // returns List<StockSummaryItem>
+            } catch (_: Exception) {
+                _allGainers.value = emptyList()
+                _allLosers.value = emptyList()
             }
         }
     }

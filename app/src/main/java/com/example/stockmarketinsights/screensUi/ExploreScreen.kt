@@ -67,7 +67,7 @@ fun ExploreScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // 🔍 Search bar
+            // Search bar
             item {
                 OutlinedTextField(
                     value = searchQuery,

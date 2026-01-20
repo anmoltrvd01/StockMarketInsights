@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,50 +17,41 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.stockmarketinsights.componentsUi.AddToWatchlistBottomSheet
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.dialogsUi.AddToWatchlistDialog
 import com.example.stockmarketinsights.roomdb.AppDatabase
 import com.example.stockmarketinsights.roomdb.WatchlistRepository
 import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
 import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
+fun DetailsScreen(
+    stock: StockSummaryItem,
+    navController: NavController
+) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val repository = remember { WatchlistRepository(db.watchlistDao()) }
-    val viewModel: WatchlistViewModel = viewModel(factory = WatchlistViewModelFactory(repository))
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val coroutineScope = rememberCoroutineScope()
-    var isSheetOpen by rememberSaveable { mutableStateOf(false) }
+    val viewModel: WatchlistViewModel =
+        viewModel(factory = WatchlistViewModelFactory(repository))
 
-    if (isSheetOpen) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                coroutineScope.launch {
-                    sheetState.hide()
-                    isSheetOpen = false
-                }
-            },
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface
-        ) {
-            AddToWatchlistBottomSheet(
-                stock = stock,
-                sheetState = sheetState,
-                onClose = {
-                    coroutineScope.launch {
-                        sheetState.hide()
-                        isSheetOpen = false
-                    }
-                },
-                viewModel = viewModel
-            )
+    val watchlistNames by viewModel.watchlistItems.collectAsState()
+
+    var showDialog by remember { mutableStateOf(false) }
+
+    AddToWatchlistDialog(
+        showDialog = showDialog,
+        existingWatchlists = watchlistNames
+            .map { it.watchlistName }
+            .distinct(),
+        onDismiss = { showDialog = false },
+        onAdd = { watchlistName ->
+            viewModel.addStockToWatchlist(watchlistName, stock)
+            showDialog = false
         }
-    }
+    )
 
     Scaffold(
         topBar = {
@@ -73,12 +63,7 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            isSheetOpen = true
-                            sheetState.show()
-                        }
-                    }) {
+                    IconButton(onClick = { showDialog = true }) {
                         Icon(Icons.Default.Bookmark, contentDescription = "Bookmark")
                     }
                 }
@@ -91,6 +76,7 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,20 +92,23 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(stock.name, style = MaterialTheme.typography.titleMedium)
-                        Text("${stock.symbol}, Common Stock", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "${stock.symbol}, Common Stock",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = stock.price,
-                        color = if (stock.changePercent.startsWith("+")) Color(0xFF27AE60) else Color(0xFFC0392B),
-                        style = MaterialTheme.typography.bodyMedium
+                        color = if (stock.changePercent.startsWith("+"))
+                            Color(0xFF27AE60) else Color(0xFFC0392B)
                     )
                     Text(
                         text = stock.changePercent,
-                        color = if (stock.changePercent.startsWith("+")) Color(0xFF27AE60) else Color(0xFFC0392B),
-                        style = MaterialTheme.typography.bodySmall
+                        color = if (stock.changePercent.startsWith("+"))
+                            Color(0xFF27AE60) else Color(0xFFC0392B)
                     )
                 }
             }
@@ -133,36 +122,13 @@ fun DetailsScreen(stock: StockSummaryItem, navController: NavController) {
                     .background(Color.LightGray, shape = RoundedCornerShape(12.dp))
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                listOf("1D", "1W", "1M", "3M", "6M", "1Y").forEach {
-                    Text(it, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Text("About ${stock.name}", style = MaterialTheme.typography.titleSmall)
             Text(
-                "This is a dummy description of ${stock.name}. Replace this with real company info from the API.",
+                "This is a dummy description of ${stock.name}. Replace later with real company info.",
                 style = MaterialTheme.typography.bodySmall
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, label = { Text("Industry: Tech") })
-                AssistChip(onClick = {}, label = { Text("Sector: AI") })
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text("Current price: ${stock.price}", style = MaterialTheme.typography.bodyMedium)
-            Text("Profit Margin: 0.247 (Sample)", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
