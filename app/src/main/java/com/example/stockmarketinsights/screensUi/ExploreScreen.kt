@@ -27,7 +27,6 @@ fun ExploreScreen(
     onStockClick: (String) -> Unit = {}
 ) {
 
-
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val repository = remember { StockRepository(context = context, db = db) }
@@ -38,6 +37,13 @@ fun ExploreScreen(
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchState by viewModel.searchResults.collectAsState()
+
+    val gainers by viewModel.allGainers.collectAsState()
+    val losers by viewModel.allLosers.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllStocks()
+    }
 
     Scaffold(
         topBar = {
@@ -50,10 +56,12 @@ fun ExploreScreen(
                     )
                 },
                 actions = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
-                    )
+                    IconButton(onClick = { }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
+                    }
                 }
             )
         }
@@ -77,7 +85,7 @@ fun ExploreScreen(
                 )
             }
 
-            //UI State handling
+            // Search results
             when (searchState) {
 
                 is UiState.Loading -> {
@@ -94,40 +102,77 @@ fun ExploreScreen(
                 }
 
                 is UiState.Error -> {
-                    val message = (searchState as UiState.Error).message
                     item {
                         Text(
-                            text = message,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium
+                            text = (searchState as UiState.Error).message,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
 
                 is UiState.Success -> {
                     val stocks = (searchState as UiState.Success).data
-
-                    if (stocks.isEmpty() && searchQuery.isNotBlank()) {
-                        item {
-                            Text(
-                                text = "No results found",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    } else {
-                        items(stocks) { stock ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = { onStockClick(stock.symbol) }
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(stock.symbol, fontWeight = FontWeight.Bold)
-                                    Text(
-                                        stock.name,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
+                    if (searchQuery.isNotBlank()) {
+                        if (stocks.isEmpty()) {
+                            item { Text("No results found") }
+                        } else {
+                            items(stocks) { stock ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = { onStockClick(stock.symbol) }
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(stock.symbol, fontWeight = FontWeight.Bold)
+                                        Text(stock.name)
+                                    }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            // Top Gainers
+            if (searchQuery.isBlank() && gainers.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Top Gainers",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+
+                items(gainers) { stock ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onStockClick(stock.symbol) }
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(stock.symbol, fontWeight = FontWeight.Bold)
+                            Text(stock.name)
+                        }
+                    }
+                }
+            }
+
+            // Top Losers
+            if (searchQuery.isBlank() && losers.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Top Losers",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+
+                items(losers) { stock ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onStockClick(stock.symbol) }
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(stock.symbol, fontWeight = FontWeight.Bold)
+                            Text(stock.name)
                         }
                     }
                 }
