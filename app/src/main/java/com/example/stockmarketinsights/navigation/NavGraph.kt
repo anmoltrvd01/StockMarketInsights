@@ -8,11 +8,11 @@ import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
+import com.example.stockmarketinsights.repository.StockRepository
 import com.example.stockmarketinsights.roomdb.AppDatabase
 import com.example.stockmarketinsights.roomdb.WatchlistRepository
 import com.example.stockmarketinsights.screensUi.*
-import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
-import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
+import com.example.stockmarketinsights.viewmodel.*
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -31,9 +31,16 @@ fun NavGraph(
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
-    val repository = WatchlistRepository(db.watchlistDao())
+
+    // Watchlist
+    val watchlistRepository = WatchlistRepository(db.watchlistDao())
     val watchlistViewModel: WatchlistViewModel =
-        viewModel(factory = WatchlistViewModelFactory(repository))
+        viewModel(factory = WatchlistViewModelFactory(watchlistRepository))
+
+    // Explore
+    val exploreRepository = StockRepository(context = context, db = db)
+    val exploreViewModel: ExploreViewModel =
+        viewModel(factory = ExploreViewModelFactory(exploreRepository))
 
     NavHost(
         navController = navController,
@@ -41,12 +48,15 @@ fun NavGraph(
         modifier = modifier
     ) {
 
-        //  EXPLORE
+        // EXPLORE
         composable(Screen.Explore.route) {
             ExploreScreen(
                 modifier = modifier,
-                onStockClick = { symbol ->
-                    // navigate only with symbol for now
+                viewModel = exploreViewModel,
+                onSearchClick = {
+                    navController.navigate(Screen.Search.route)
+                },
+                onStockClick = {
                     navController.navigate(Screen.Search.route)
                 }
             )
@@ -62,22 +72,14 @@ fun NavGraph(
                 navArgument("changePercent") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val name = safeDecode(backStackEntry.arguments?.getString("name"))
-            val symbol = safeDecode(backStackEntry.arguments?.getString("symbol"))
-            val price = safeDecode(backStackEntry.arguments?.getString("price"))
-            val changePercent = safeDecode(backStackEntry.arguments?.getString("changePercent"))
-
             val stock = StockSummaryItem(
-                name = name,
-                symbol = symbol,
-                price = price,
-                changePercent = changePercent
+                name = safeDecode(backStackEntry.arguments?.getString("name")),
+                symbol = safeDecode(backStackEntry.arguments?.getString("symbol")),
+                price = safeDecode(backStackEntry.arguments?.getString("price")),
+                changePercent = safeDecode(backStackEntry.arguments?.getString("changePercent"))
             )
 
-            DetailsScreen(
-                stock = stock,
-                navController = navController
-            )
+            DetailsScreen(stock = stock, navController = navController)
         }
 
         // WATCHLIST
@@ -95,9 +97,7 @@ fun NavGraph(
                     )
                 },
                 onWatchlistClick = { name ->
-                    navController.navigate(
-                        Screen.WatchlistDetail.withArgs(name)
-                    )
+                    navController.navigate(Screen.WatchlistDetail.withArgs(name))
                 },
                 onSearchClick = {
                     navController.navigate("watchlistSearch")
@@ -105,12 +105,7 @@ fun NavGraph(
             )
         }
 
-        composable(
-            route = "watchlistDetail/{watchlistName}",
-            arguments = listOf(
-                navArgument("watchlistName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
+        composable("watchlistDetail/{watchlistName}") { backStackEntry ->
             val watchlistName =
                 safeDecode(backStackEntry.arguments?.getString("watchlistName"))
 
@@ -135,9 +130,7 @@ fun NavGraph(
                 viewModel = watchlistViewModel,
                 onBack = { navController.popBackStack() },
                 onWatchlistClick = { name ->
-                    navController.navigate(
-                        Screen.WatchlistDetail.withArgs(name)
-                    )
+                    navController.navigate(Screen.WatchlistDetail.withArgs(name))
                 }
             )
         }
@@ -145,6 +138,7 @@ fun NavGraph(
         // GLOBAL SEARCH
         composable(Screen.Search.route) {
             SearchAllStocksScreen(
+                viewModel = exploreViewModel,
                 onStockClick = { stock ->
                     navController.navigate(
                         Screen.Details.withArgs(

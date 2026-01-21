@@ -22,9 +22,10 @@ import com.example.stockmarketinsights.viewmodel.ExploreViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchAllStocksScreen(
+    viewModel: ExploreViewModel,
     onStockClick: (StockSummaryItem) -> Unit,
     onBack: () -> Unit,
-    viewModel: ExploreViewModel = viewModel()
+
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val filterBy by viewModel.filterBy.collectAsState()

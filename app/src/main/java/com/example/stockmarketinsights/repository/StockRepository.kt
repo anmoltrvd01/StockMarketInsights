@@ -15,7 +15,7 @@ import com.example.stockmarketinsights.utils.toStockSummaryItem
 import com.example.stockmarketinsights.utils.toUi
 
 class StockRepository(
-    private val context: Context, // needed for NetworkUtils
+    private val context: Context,
     private val api: AlphaVantageApiService = RetrofitInstance.api,
     private val db: AppDatabase
 ) {
@@ -23,56 +23,62 @@ class StockRepository(
     private val stockDao = db.stockDao()
     private val apiKey = BuildConfig.ALPHA_VANTAGE_API_KEY
 
-    /**
-     * Fetch top gainers or losers.
-     * Returns cached data if offline or API rate limit exceeded.
-     */
     suspend fun getTopStocks(type: String): List<StockSummaryItem> {
 
-        // Check offline first
+        println("REPO -> getTopStocks called for type = $type")
+
         if (!NetworkUtils.isConnected(context)) {
+            println("REPO -> OFFLINE MODE")
             val cached = stockDao.getAllStocks()
-            if (cached.isNotEmpty()) {
-                return cached.map { it.toUi() }
-            } else {
-                return emptyList() // No network & no cache
-            }
+            println("REPO -> cached size = ${cached.size}")
+            return cached.map { it.toUi() }
         }
 
-        //  Check API rate limiter
         if (!ApiRateLimiter.canCallApi()) {
-            // Return cached data if available
+            println("REPO -> RATE LIMITED")
             val cached = stockDao.getAllStocks()
-            if (cached.isNotEmpty()) return cached.map { it.toUi() }
-            return emptyList() // No cache and cannot call API
+            println("REPO -> cached size = ${cached.size}")
+            return cached.map { it.toUi() }
         }
 
-        //  Make API call
         ApiRateLimiter.recordCall()
+        println("REPO -> API CALL STARTED")
+
         val response = api.getTopGainersAndLosers(apiKey = apiKey)
-        val apiStocks = if (type.lowercase() == "gainers") response.top_gainers
-        else response.top_losers
+
+        val apiStocks =
+            if (type.lowercase() == "gainers") response.top_gainers
+            else response.top_losers
+
+        println("REPO -> API raw stocks size = ${apiStocks.size}")
 
         val uiStocks = apiStocks.map { it.toStockSummaryItem() }
 
-        // Save to cache
+        println("REPO -> UI stocks size = ${uiStocks.size}")
+
         stockDao.insertStocks(uiStocks.map { it.toEntity() })
 
         return uiStocks
     }
 
     suspend fun searchSymbol(query: String): List<StockSummaryItem> {
-        // Offline: search cache
+        println("REPO -> searchSymbol called with query = $query")
+
         if (!NetworkUtils.isConnected(context)) {
+            println("REPO -> OFFLINE SEARCH")
             val cached = stockDao.searchStocks("%$query%")
             return cached.map { it.toUi() }
         }
 
-        // Rate limiter check
-        if (!ApiRateLimiter.canCallApi()) return emptyList()
+        if (!ApiRateLimiter.canCallApi()) {
+            println("REPO -> RATE LIMITED SEARCH")
+            return emptyList()
+        }
 
         ApiRateLimiter.recordCall()
         val response = api.searchSymbols(keywords = query, apiKey = apiKey)
+        println("REPO -> search results size = ${response.bestMatches.size}")
+
         return response.bestMatches.map { it.toStockSummaryItem() }
     }
 
@@ -85,7 +91,7 @@ class StockRepository(
     }
 
     suspend fun getCompanyOverview(symbol: String): CompanyOverview {
-        // TODO: Replace with actual API call later
+        println("REPO -> getCompanyOverview called for $symbol")
         return CompanyOverview(
             symbol = symbol,
             name = "Company $symbol",
@@ -96,11 +102,24 @@ class StockRepository(
     }
 
     suspend fun getDailyPrices(symbol: String): List<DailySeries> {
-        // TODO: Replace with actual API call later
+        println("REPO -> getDailyPrices called for $symbol")
         return listOf(
-            DailySeries(date = "2026-01-20", open = 100.0, high = 105.0, low = 98.0, close = 102.0, volume = 10000),
-            DailySeries(date = "2026-01-19", open = 102.0, high = 106.0, low = 101.0, close = 104.0, volume = 12000)
+            DailySeries(
+                date = "2026-01-20",
+                open = 100.0,
+                high = 105.0,
+                low = 98.0,
+                close = 102.0,
+                volume = 10000
+            ),
+            DailySeries(
+                date = "2026-01-19",
+                open = 102.0,
+                high = 106.0,
+                low = 101.0,
+                close = 104.0,
+                volume = 12000
+            )
         )
     }
-
 }

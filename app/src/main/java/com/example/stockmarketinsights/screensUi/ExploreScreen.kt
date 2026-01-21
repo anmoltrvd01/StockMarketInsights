@@ -7,14 +7,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.stockmarketinsights.dataModel.UiState
+import com.example.stockmarketinsights.componentsUi.SkeletonStockCard
 import com.example.stockmarketinsights.repository.StockRepository
 import com.example.stockmarketinsights.roomdb.AppDatabase
 import com.example.stockmarketinsights.viewmodel.ExploreViewModel
@@ -24,9 +23,10 @@ import com.example.stockmarketinsights.viewmodel.ExploreViewModelFactory
 @Composable
 fun ExploreScreen(
     modifier: Modifier = Modifier,
-    onStockClick: (String) -> Unit = {}
+    onStockClick: (String) -> Unit = {},
+    onSearchClick: () -> Unit = {},
+    viewModel: ExploreViewModel
 ) {
-
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val repository = remember { StockRepository(context = context, db = db) }
@@ -34,9 +34,6 @@ fun ExploreScreen(
     val viewModel: ExploreViewModel = viewModel(
         factory = ExploreViewModelFactory(repository)
     )
-
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val searchState by viewModel.searchResults.collectAsState()
 
     val gainers by viewModel.allGainers.collectAsState()
     val losers by viewModel.allLosers.collectAsState()
@@ -56,10 +53,10 @@ fun ExploreScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = onSearchClick) {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search"
+                            contentDescription = "Search Stocks"
                         )
                     }
                 }
@@ -75,65 +72,15 @@ fun ExploreScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Search bar
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = viewModel::updateSearchQuery,
-                    placeholder = { Text("Search stock (e.g. AAPL, TSLA)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Search results
-            when (searchState) {
-
-                is UiState.Loading -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                }
-
-                is UiState.Error -> {
-                    item {
-                        Text(
-                            text = (searchState as UiState.Error).message,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                is UiState.Success -> {
-                    val stocks = (searchState as UiState.Success).data
-                    if (searchQuery.isNotBlank()) {
-                        if (stocks.isEmpty()) {
-                            item { Text("No results found") }
-                        } else {
-                            items(stocks) { stock ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onStockClick(stock.symbol) }
-                                ) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text(stock.symbol, fontWeight = FontWeight.Bold)
-                                        Text(stock.name)
-                                    }
-                                }
-                            }
-                        }
-                    }
+            // Skeletons during initial load
+            if (gainers.isEmpty() && losers.isEmpty()) {
+                items(6) {
+                    SkeletonStockCard()
                 }
             }
 
             // Top Gainers
-            if (searchQuery.isBlank() && gainers.isNotEmpty()) {
+            if (gainers.isNotEmpty()) {
                 item {
                     Text(
                         text = "Top Gainers",
@@ -156,7 +103,7 @@ fun ExploreScreen(
             }
 
             // Top Losers
-            if (searchQuery.isBlank() && losers.isNotEmpty()) {
+            if (losers.isNotEmpty()) {
                 item {
                     Text(
                         text = "Top Losers",

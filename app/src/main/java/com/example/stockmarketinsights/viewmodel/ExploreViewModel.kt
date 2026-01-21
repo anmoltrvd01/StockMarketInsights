@@ -71,12 +71,20 @@ class ExploreViewModel(
     fun fetchAllStocks() {
         viewModelScope.launch {
             try {
-                _allGainers.value = repository.getTopGainers() // returns List<StockSummaryItem>
-                _allLosers.value = repository.getTopLosers()   // returns List<StockSummaryItem>
-            } catch (_: Exception) {
+                println("FETCH ALL STOCKS CALLED")
+
+                _allGainers.value = repository.getTopStocks("gainers")
+                _allLosers.value = repository.getTopStocks("losers")
+
+                println("GAINERS SIZE = ${_allGainers.value.size}")
+                println("LOSERS SIZE = ${_allLosers.value.size}")
+
+            } catch (e: Exception) {
+                e.printStackTrace()
                 _allGainers.value = emptyList()
                 _allLosers.value = emptyList()
             }
         }
     }
+    
 }
