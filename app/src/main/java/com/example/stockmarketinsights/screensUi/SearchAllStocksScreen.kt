@@ -1,20 +1,43 @@
 package com.example.stockmarketinsights.screensUi
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.viewmodel.ExploreViewModel
@@ -26,7 +49,7 @@ fun SearchAllStocksScreen(
     onStockClick: (StockSummaryItem) -> Unit,
     onBack: () -> Unit,
 
-) {
+    ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val filterBy by viewModel.filterBy.collectAsState()
 
@@ -53,7 +76,7 @@ fun SearchAllStocksScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -131,14 +154,14 @@ fun SearchAllStocksScreen(
                     items(filteredStocks) { stock ->
                         val backgroundColor = when {
                             stock.changePercent.contains("-") -> Color(0xFFFFCDD2) // red tone
-                            stock.changePercent.contains("+") || stock.changePercent.toDoubleOrNull() ?: 0.0 > 0.0 -> Color(0xFFC8E6C9) // green tone
+                            stock.changePercent.contains("+") || (stock.changePercent.toDoubleOrNull() ?: 0.0) > 0.0 -> Color(0xFFC8E6C9) // green tone
                             else -> MaterialTheme.colorScheme.surfaceVariant
                         }
 
                         StockCard(
                             stock = stock,
-                            backgroundColor = backgroundColor,
-                            onClick = { onStockClick(stock) }
+                            onClick = { onStockClick(stock) },
+                            cardColors = CardDefaults.cardColors(containerColor = backgroundColor)
                         )
                     }
                 }

@@ -4,22 +4,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.*
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.repository.StockRepository
 import com.example.stockmarketinsights.roomdb.AppDatabase
 import com.example.stockmarketinsights.roomdb.WatchlistRepository
-import com.example.stockmarketinsights.screensUi.*
-import com.example.stockmarketinsights.viewmodel.*
+import com.example.stockmarketinsights.screensUi.DetailsScreen
+import com.example.stockmarketinsights.screensUi.ExploreScreen
+import com.example.stockmarketinsights.screensUi.SearchAllStocksScreen
+import com.example.stockmarketinsights.screensUi.ViewAllScreen
+import com.example.stockmarketinsights.screensUi.WatchlistDetailScreen
+import com.example.stockmarketinsights.screensUi.WatchlistScreen
+import com.example.stockmarketinsights.screensUi.WatchlistSearchScreen
+import com.example.stockmarketinsights.viewmodel.ExploreViewModel
+import com.example.stockmarketinsights.viewmodel.ExploreViewModelFactory
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
+import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 fun safeDecode(input: String?): String {
     return try {
         URLDecoder.decode(input ?: "", StandardCharsets.UTF_8.toString())
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         input ?: ""
     }
 }
@@ -56,8 +67,43 @@ fun NavGraph(
                 onSearchClick = {
                     navController.navigate(Screen.Search.route)
                 },
-                onStockClick = {
-                    navController.navigate(Screen.Search.route)
+                onStockClick = { stock ->
+                    navController.navigate(
+                        Screen.Details.withArgs(
+                            stock.name,
+                            stock.symbol,
+                            stock.price,
+                            stock.changePercent
+                        )
+                    )
+                },
+                onViewAllGainers = {
+                    navController.navigate(Screen.ViewAll.withArgs("gainers"))
+                },
+                onViewAllLosers = {
+                    navController.navigate(Screen.ViewAll.withArgs("losers"))
+                }
+            )
+        }
+
+        // VIEW ALL
+        composable(
+            route = Screen.ViewAll.route,
+            arguments = listOf(navArgument("category") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category") ?: "gainers"
+            ViewAllScreen(
+                navController = navController,
+                category = category,
+                onStockClick = { stock ->
+                    navController.navigate(
+                        Screen.Details.withArgs(
+                            stock.name,
+                            stock.symbol,
+                            stock.price,
+                            stock.changePercent
+                        )
+                    )
                 }
             )
         }

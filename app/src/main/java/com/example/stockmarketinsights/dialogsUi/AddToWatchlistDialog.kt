@@ -1,9 +1,14 @@
 package com.example.stockmarketinsights.dialogsUi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -16,58 +21,35 @@ fun AddToWatchlistDialog(
 ) {
     if (showDialog) {
         var newWatchlistName by remember { mutableStateOf("") }
-        var selectedWatchlist by remember { mutableStateOf("") }
 
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = {
-                Text("Add to Watchlist")
-            },
+            title = { Text("Add to Watchlist") },
             text = {
                 Column {
-                    Text("Create New Watchlist:")
+                    existingWatchlists.forEach {
+                        Button(onClick = { onAdd(it) }) {
+                            Text(it)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = newWatchlistName,
                         onValueChange = { newWatchlistName = it },
-                        placeholder = { Text("Enter name...") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("New Watchlist Name") }
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text("Or Select Existing:")
-                    existingWatchlists.forEach { watchlist ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { selectedWatchlist = watchlist }
-                                .padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = selectedWatchlist == watchlist,
-                                onClick = { selectedWatchlist = watchlist }
-                            )
-                            Text(text = watchlist)
-                        }
-                    }
                 }
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        val resultName = if (newWatchlistName.isNotBlank()) newWatchlistName else selectedWatchlist
-                        if (resultName.isNotBlank()) {
-                            onAdd(resultName)
-                        }
-                        onDismiss()
-                    }
+                Button(
+                    onClick = { onAdd(newWatchlistName) },
+                    enabled = newWatchlistName.isNotBlank()
                 ) {
                     Text("Add")
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss) {
+                Button(onClick = onDismiss) {
                     Text("Cancel")
                 }
             }

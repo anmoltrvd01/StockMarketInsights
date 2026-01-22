@@ -3,7 +3,7 @@ package com.example.stockmarketinsights.screensUi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,7 +46,7 @@ fun WatchlistDetailScreen(
                 title = { Text(watchlistName) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -83,7 +83,7 @@ fun WatchlistDetailScreen(
                         Box(modifier = Modifier.fillMaxWidth()) {
                             StockCard(
                                 stock = stock,
-                                backgroundColor = Color(0xFFF5F5F5),
+                                cardColors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
                                 onClick = { onStockClick(stock) },
                                 modifier = Modifier.fillMaxWidth()
                             )

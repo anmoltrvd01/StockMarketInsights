@@ -31,7 +31,7 @@ fun SkeletonStockCard() {
         Box(
             modifier = Modifier
                 .width(140.dp)
-                .height(12.dp)
+                .height(50.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
         )
