@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.stockmarketinsights.componentsUi.SkeletonStockCard
-import com.example.stockmarketinsights.componentsUi.SkeletonStockGrid
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.viewmodel.ExploreViewModel
@@ -87,7 +86,7 @@ fun ViewAllScreen(
             val isInitialLoading = stocks.isEmpty() && !isLoadingMore
             if (isInitialLoading) {
                 items(12) {
-                    SkeletonStockGrid()
+                    SkeletonStockCard()
                 }
             }
 

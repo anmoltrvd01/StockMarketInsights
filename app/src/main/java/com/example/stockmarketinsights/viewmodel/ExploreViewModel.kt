@@ -24,6 +24,9 @@ class ExploreViewModel(
 
     private val _isLoadingMoreLosers = MutableStateFlow(false)
     val isLoadingMoreLosers = _isLoadingMoreLosers.asStateFlow()
+    private val _isInitialLoading = MutableStateFlow(true)
+    val isInitialLoading = _isInitialLoading.asStateFlow()
+
 
     //SEARCH
     private val _searchQuery = MutableStateFlow("")
@@ -81,22 +84,19 @@ class ExploreViewModel(
 
     fun fetchAllStocks() {
         viewModelScope.launch {
+            _isInitialLoading.value = true
             try {
-                println("FETCH ALL STOCKS CALLED")
-
                 _allGainers.value = repository.getTopStocks("gainers")
                 _allLosers.value = repository.getTopStocks("losers")
-
-                println("GAINERS SIZE = ${_allGainers.value.size}")
-                println("LOSERS SIZE = ${_allLosers.value.size}")
-
             } catch (e: Exception) {
-                e.printStackTrace()
                 _allGainers.value = emptyList()
                 _allLosers.value = emptyList()
+            } finally {
+                _isInitialLoading.value = false
             }
         }
     }
+
 
     fun loadMoreGainers() {
         if (_isLoadingMoreGainers.value) return
