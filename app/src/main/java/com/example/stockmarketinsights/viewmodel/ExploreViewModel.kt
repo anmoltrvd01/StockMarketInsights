@@ -8,11 +8,22 @@ import com.example.stockmarketinsights.repository.StockRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ExploreViewModel(
     private val repository: StockRepository
+
 ) : ViewModel() {
+
+    private var gainersPage = 1
+    private var losersPage = 1
+    private val pageSize = 20
+    private val _isLoadingMoreGainers = MutableStateFlow(false)
+    val isLoadingMoreGainers = _isLoadingMoreGainers.asStateFlow()
+
+    private val _isLoadingMoreLosers = MutableStateFlow(false)
+    val isLoadingMoreLosers = _isLoadingMoreLosers.asStateFlow()
 
     //SEARCH
     private val _searchQuery = MutableStateFlow("")
@@ -86,5 +97,37 @@ class ExploreViewModel(
             }
         }
     }
-    
+
+    fun loadMoreGainers() {
+        if (_isLoadingMoreGainers.value) return
+
+        viewModelScope.launch {
+            _isLoadingMoreGainers.value = true
+            gainersPage++
+
+            val all = repository.getTopStocks("gainers")
+            val nextChunk = all.take(gainersPage * pageSize)
+
+            _allGainers.value = nextChunk
+            _isLoadingMoreGainers.value = false
+        }
+    }
+
+    fun loadMoreLosers() {
+        if (_isLoadingMoreLosers.value) return
+
+        viewModelScope.launch {
+            _isLoadingMoreLosers.value = true
+            losersPage++
+
+            val all = repository.getTopStocks("losers")
+            val nextChunk = all.take(losersPage * pageSize)
+
+            _allLosers.value = nextChunk
+            _isLoadingMoreLosers.value = false
+        }
+    }
+
+
+
 }

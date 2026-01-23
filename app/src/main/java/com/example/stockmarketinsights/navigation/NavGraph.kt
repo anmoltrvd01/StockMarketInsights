@@ -13,17 +13,8 @@ import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.repository.StockRepository
 import com.example.stockmarketinsights.roomdb.AppDatabase
 import com.example.stockmarketinsights.roomdb.WatchlistRepository
-import com.example.stockmarketinsights.screensUi.DetailsScreen
-import com.example.stockmarketinsights.screensUi.ExploreScreen
-import com.example.stockmarketinsights.screensUi.SearchAllStocksScreen
-import com.example.stockmarketinsights.screensUi.ViewAllScreen
-import com.example.stockmarketinsights.screensUi.WatchlistDetailScreen
-import com.example.stockmarketinsights.screensUi.WatchlistScreen
-import com.example.stockmarketinsights.screensUi.WatchlistSearchScreen
-import com.example.stockmarketinsights.viewmodel.ExploreViewModel
-import com.example.stockmarketinsights.viewmodel.ExploreViewModelFactory
-import com.example.stockmarketinsights.viewmodel.WatchlistViewModel
-import com.example.stockmarketinsights.viewmodel.WatchlistViewModelFactory
+import com.example.stockmarketinsights.screensUi.*
+import com.example.stockmarketinsights.viewmodel.*
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -43,12 +34,12 @@ fun NavGraph(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
 
-    // Watchlist
+    // Watchlist ViewModel
     val watchlistRepository = WatchlistRepository(db.watchlistDao())
     val watchlistViewModel: WatchlistViewModel =
         viewModel(factory = WatchlistViewModelFactory(watchlistRepository))
 
-    // Explore
+    // Explore ViewModel (SHARED)
     val exploreRepository = StockRepository(context = context, db = db)
     val exploreViewModel: ExploreViewModel =
         viewModel(factory = ExploreViewModelFactory(exploreRepository))
@@ -86,15 +77,18 @@ fun NavGraph(
             )
         }
 
-        // VIEW ALL
+        // VIEW ALL (Pagination enabled)
         composable(
             route = Screen.ViewAll.route,
             arguments = listOf(navArgument("category") { type = NavType.StringType })
         ) { backStackEntry ->
-            val category = backStackEntry.arguments?.getString("category") ?: "gainers"
+            val category =
+                backStackEntry.arguments?.getString("category") ?: "gainers"
+
             ViewAllScreen(
                 navController = navController,
                 category = category,
+                viewModel = exploreViewModel, // Shared ViewModel
                 onStockClick = { stock ->
                     navController.navigate(
                         Screen.Details.withArgs(
