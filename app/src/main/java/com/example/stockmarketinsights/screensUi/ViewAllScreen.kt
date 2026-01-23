@@ -1,13 +1,11 @@
 package com.example.stockmarketinsights.screensUi
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -26,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.stockmarketinsights.componentsUi.SkeletonStockCard
+import com.example.stockmarketinsights.componentsUi.SkeletonStockGrid
 import com.example.stockmarketinsights.componentsUi.StockCard
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.viewmodel.ExploreViewModel
@@ -83,9 +83,18 @@ fun ViewAllScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            // INITIAL SKELETON LOADING
+            val isInitialLoading = stocks.isEmpty() && !isLoadingMore
+            if (isInitialLoading) {
+                items(12) {
+                    SkeletonStockGrid()
+                }
+            }
+
+
             itemsIndexed(stocks) { index, stock ->
 
-                // Pagination
+                // Pagination trigger
                 if (index == stocks.lastIndex - 2 && !isLoadingMore) {
                     if (category == "gainers") {
                         viewModel.loadMoreGainers()
@@ -108,19 +117,13 @@ fun ViewAllScreen(
                 )
             }
 
-            // Loading footer
+
             if (isLoadingMore) {
-                item(span = { GridItemSpan(2) }) {
-                    Text(
-                        text = "Loading more...",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                items(2) {
+                    SkeletonStockCard()
                 }
             }
         }
+
     }
 }
