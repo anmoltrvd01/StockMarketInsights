@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.stockmarketinsights.componentsUi.LineChartView
 import com.example.stockmarketinsights.dataModel.StockSummaryItem
 import com.example.stockmarketinsights.dialogsUi.AddToWatchlistDialog
 import com.example.stockmarketinsights.roomdb.AppDatabase
@@ -142,8 +143,13 @@ fun DetailsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    .background(Color.LightGray, shape = RoundedCornerShape(12.dp))
-            )
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                LineChartView(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
