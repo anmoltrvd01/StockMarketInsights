@@ -38,11 +38,11 @@ fun LineChartView(modifier: Modifier = Modifier) {
             )
 
             val dataSet = LineDataSet(entries, "Price").apply {
-                color = Color.Blue.hashCode()
+                color = Color.Green.hashCode()
                 valueTextColor = Color.Black.hashCode()
                 lineWidth = 2f
                 circleRadius = 4f
-                setCircleColor(Color.Blue.hashCode())
+                setCircleColor(Color.White.hashCode())
             }
 
             val lineData = LineData(dataSet)

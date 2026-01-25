@@ -1,6 +1,7 @@
 package com.example.stockmarketinsights.dataModel
 
 import java.io.Serializable
+import com.google.gson.annotations.SerializedName
 
 data class StockSummaryItem(
     val name: String,
@@ -10,12 +11,44 @@ data class StockSummaryItem(
 ) : Serializable
 
 data class CompanyOverview(
-    val symbol: String,
-    val name: String,
-    val description: String,
-    val sector: String,
-    val industry: String
+
+    @SerializedName("Symbol")
+    val symbol: String?,
+
+    @SerializedName("Name")
+    val name: String?,
+
+    @SerializedName("Description")
+    val description: String?,
+
+    @SerializedName("Sector")
+    val sector: String?,
+
+    @SerializedName("Industry")
+    val industry: String?,
+
+    @SerializedName("MarketCapitalization")
+    val marketCap: String?,
+
+    @SerializedName("PERatio")
+    val peRatio: String?,
+
+    @SerializedName("DividendYield")
+    val dividendYield: String?,
+
+    @SerializedName("52WeekHigh")
+    val week52High: String?,
+
+    @SerializedName("52WeekLow")
+    val week52Low: String?,
+
+    @SerializedName("Country")
+    val country: String?,
+
+    @SerializedName("Exchange")
+    val exchange: String?
 )
+
 
 data class DailySeries(
     val date: String,
